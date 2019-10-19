@@ -172,19 +172,7 @@ defmodule Eval do
       nil
     end
   end
-  defp funcall([:=,x,y],env) do
-    {x1,_} = eval(x,env)
-    {y1,_} = eval(y,env)
-    if !is_number(x1) || !is_number(y1) do
-      throw "Error: Not number ="
-    end
-    if x1 == y1 do
-      :t
-    else
-      nil
-    end
-  end
-  defp funcall([:>,x,y],env) do
+  defp funcall([:greaterp,x,y],env) do
     {x1,_} = eval(x,env)
     {y1,_} = eval(y,env)
     if !is_number(x1) || !is_number(y1) do
@@ -196,7 +184,7 @@ defmodule Eval do
       nil
     end
   end
-  defp funcall([:<,x,y],env) do
+  defp funcall([:lessp,x,y],env) do
     {x1,_} = eval(x,env)
     {y1,_} = eval(y,env)
     if !is_number(x1) || !is_number(y1) do
@@ -208,33 +196,57 @@ defmodule Eval do
       nil
     end
   end
-  defp funcall([:<=,x,y],env) do
-    {x1,_} = eval(x,env)
-    {y1,_} = eval(y,env)
-    if !is_number(x1) || !is_number(y1) do
-      throw "Error: Not number <="
-    end
-    if x1 <= y1 do
-      :t
+  defp funcall([:max|arg],env) do
+    arg1 = evlis(arg,env)
+    if !Enum.all?(arg1,fn(x) -> is_number(x) end) do
+      throw "Error: Not number max"
     else
-      nil
+      Enum.max(arg1)
     end
   end
-  defp funcall([:>=,x,y],env) do
-    {x1,_} = eval(x,env)
-    {y1,_} = eval(y,env)
-    if !is_number(x1) || !is_number(y1) do
-      throw "Error: Not number >="
-    end
-    if x1 >= y1 do
-      :t
+  defp funcall([:min|arg],env) do
+    arg1 = evlis(arg,env)
+    if !Enum.all?(arg1,fn(x) -> is_number(x) end) do
+      throw "Error: Not number max"
     else
-      nil
+      Enum.min(arg1)
     end
   end
   defp funcall([:numberp,arg],env) do
     {s,_} = eval(arg,env)
     if is_number(s) do
+      :t
+    else
+      nil
+    end
+  end
+  defp funcall([:floatp,arg],env) do
+    {s,_} = eval(arg,env)
+    if is_float(s) do
+      :t
+    else
+      nil
+    end
+  end
+  defp funcall([:zerop,arg],env) do
+    {s,_} = eval(arg,env)
+    if s == 0 do
+      :t
+    else
+      nil
+    end
+  end
+  defp funcall([:minusp,arg],env) do
+    {s,_} = eval(arg,env)
+    if s < 0 do
+      :t
+    else
+      nil
+    end
+  end
+  defp funcall([:onep,arg],env) do
+    {s,_} = eval(arg,env)
+    if s == 1 do
       :t
     else
       nil

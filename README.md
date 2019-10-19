@@ -1,6 +1,10 @@
 # Elxlisp
 Lisp 1.5 M-expression. Now under construction.
 
+**TODO**
+load[filename]
+
+
 ## Installation
 make clone from GitHub
 
