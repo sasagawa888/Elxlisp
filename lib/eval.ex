@@ -1,6 +1,7 @@
 
   #----------------eval-------------
 defmodule Eval do
+  use Bitwise
   @moduledoc """
   Evaluate S expression
   Return value is tuple. {val,env}
@@ -40,6 +41,9 @@ defmodule Eval do
   def eval(x,env) when is_number(x) do
     {x,env}
   end
+  def eval(x,env) when is_binary(x) do
+    {x,env}
+  end
   def eval([:quote,x],env) do
     {x,env}
   end
@@ -67,6 +71,15 @@ defmodule Eval do
   def eval([:prog,arg|body],env) do
     env1 = bindenv(arg,make_nil(arg),env)
     evprog(body,env1)
+  end
+  def eval([:load,x],env) do
+    {x1,_} = eval(x,env)
+    {status,string} = File.read(x1)
+    if status == :error do
+      throw "Error load"
+    end
+    env1 = load(env,Read.tokenize(string))
+    {:t,env1}
   end
   def eval(x,env) when is_list(x) do
     {funcall(x,env),env}
@@ -125,17 +138,48 @@ defmodule Eval do
     {s2,_} = eval(y,env)
     [s1|s2]
   end
-  defp funcall([:+|args],env) do
+  defp funcall([:plus|args],env) do
     args |> evlis(env) |> plus
   end
-  defp funcall([:-|args],env) do
-    args |> evlis(env) |> minus
+  defp funcall([:difference,x,y],env) do
+    {x1,_} = eval(x,env)
+    {y1,_} = eval(y,env)
+    x1 - y1
   end
-  defp funcall([:*|args],env) do
-    args |> evlis(env) |> mult
+  defp funcall([:times|args],env) do
+    args |> evlis(env) |> times
   end
-  defp funcall([:/|args],env) do
-    args |> evlis(env) |> divide
+  defp funcall([:quotient,x,y],env) do
+    {x1,_} = eval(x,env)
+    {y1,_} = eval(y,env)
+    div(x1,y1)
+  end
+  defp funcall([:recip,x],env) do
+    {x1,_} = eval(x,env)
+    1 / x1
+  end
+  defp funcall([:remainder,x,y],env) do
+    {x1,_} = eval(x,env)
+    {y1,_} = eval(y,env)
+    rem(x1,y1)
+  end
+  defp funcall([:divide,x,y],env) do
+    {x1,_} = eval(x,env)
+    {y1,_} = eval(y,env)
+    [div(x1,y1),rem(x1,y1)]
+  end
+  defp funcall([:expt,x,y],env) do
+    {x1,_} = eval(x,env)
+    {y1,_} = eval(y,env)
+    :math.pow(x1,y1)
+  end
+  defp funcall([:add1,x],env) do
+    {x1,_} = eval(x,env)
+    x1 + 1
+  end
+  defp funcall([:sub1,x],env) do
+    {x1,_} = eval(x,env)
+    x1 - 1
   end
   defp funcall([:null,arg],env) do
     {s,_} = eval(arg,env)
@@ -164,6 +208,15 @@ defmodule Eval do
     end
   end
   defp funcall([:eq,x,y],env) do
+    {x1,_} = eval(x,env)
+    {y1,_} = eval(y,env)
+    if x1 == y1 do
+      :t
+    else
+      nil
+    end
+  end
+  defp funcall([:equal,x,y],env) do
     {x1,_} = eval(x,env)
     {y1,_} = eval(y,env)
     if x1 == y1 do
@@ -211,6 +264,20 @@ defmodule Eval do
     else
       Enum.min(arg1)
     end
+  end
+  defp funcall([:logor|arg],env) do
+    arg |> evlis(env) |> logor
+  end
+  defp funcall([:logand|arg],env) do
+    arg |> evlis(env) |> logand
+  end
+  defp funcall([:logxor|arg],env) do
+    arg |> evlis(env) |> logxor
+  end
+  defp funcall([:leftshift,x,n],env) do
+    {x1,_} = eval(x,env)
+    {n1,_} = eval(n,env)
+    leftshift(x1,n1)
   end
   defp funcall([:numberp,arg],env) do
     {s,_} = eval(arg,env)
@@ -269,7 +336,7 @@ defmodule Eval do
     end
   end
   defp funcall([:read],_) do
-    {s,_} = Read.read([])
+    {s,_} = Read.read([],:stdin)
     s
   end
   defp funcall([:eval,x,y],_) do
@@ -306,6 +373,13 @@ defmodule Eval do
 
 
   #----------subr---------------
+  defp load(env,[]) do env end
+  defp load(env,buf) do
+    {s,buf1} = Read.read(buf,:filein)
+    {_,env1} = Eval.eval(s,env)
+    load(env1,buf1)
+  end
+
   defp plus([]) do 0 end
   defp plus([x|xs]) do
     if !is_number(x) do
@@ -314,29 +388,41 @@ defmodule Eval do
     x + plus(xs)
   end
 
-  defp minus([x|xs]) do
-    if !is_number(x) do
-      throw "Error: Not number -"
-    end
-    x - plus(xs)
-  end
-
-  defp mult([]) do 1 end
-  defp mult([x|xs]) do
+  defp times([]) do 1 end
+  defp times([x|xs]) do
     if !is_number(x) do
       throw "Error: Not number *"
     end
-    x * mult(xs)
+    x * times(xs)
   end
 
-  defp divide([x|xs]) do
-    if !is_number(x) do
-      throw "Error: Not number /"
-    end
-    y = mult(xs)
-    if y == 0 do
-      throw "Error: Divide by zero /"
-    end
-    x / y
+  defp logor([x,y]) do
+    bor(x,y)
   end
+  defp logor([x|xs]) do
+    bor(x,logor(xs))
+  end
+
+  defp logand([x,y]) do
+    band(x,y)
+  end
+  defp logand([x|xs]) do
+    band(x,logand(xs))
+  end
+
+  defp logxor([x,y]) do
+    bxor(x,y)
+  end
+  defp logxor([x|xs]) do
+    bxor(x,logxor(xs))
+  end
+
+  defp leftshift(x,0) do x end
+  defp leftshift(x,n) when n > 0 do
+    x <<< n
+  end
+  defp leftshift(x,n) when n < 0 do
+    x >>> n
+  end
+
 end

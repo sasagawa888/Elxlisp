@@ -3,70 +3,74 @@ defmodule Read do
   Read S expression and translate to list of Elixir
   The S expression is already tokenized to list/ e.g. ["+","1","2"]
   """
-  def read([]) do
-    buf = IO.gets("") |> comment_line |> drop_eol |> tokenize
-    read(buf)
+  def read([],:stdin) do
+    buf = IO.gets("") |> tokenize
+    read(buf,:stdin)
   end
-  def read(["("|xs]) do
-    {s,rest} = read_list(xs,[])
+  def read([],:filein) do [] end
+  def read(["("|xs],stream) do
+    {s,rest} = read_list(xs,[],stream)
     {[:quote,s],rest}
   end
-  def read(["'"|xs]) do
-    {s,rest} = read(xs)
-    {[:quote,s],rest}
-  end
-  def read([x,"["|xs]) do
-    {s,rest} = read_bracket(xs,[])
+  def read([x,"["|xs],stream) do
+    {s,rest} = read_bracket(xs,[],stream)
     if Enum.at(rest,0) != "=" do
       {[String.to_atom(x)|s],rest}
     else
-      {s1,rest1} = read(Enum.drop(rest,1))
+      {s1,rest1} = read(Enum.drop(rest,1),stream)
       {[:define,[String.to_atom(x)|s],s1],rest1}
     end
   end
-  def read(["["|xs]) do
-    {s,rest} = read_bracket(xs,[])
+  def read(["["|xs],stream) do
+    {s,rest} = read_bracket(xs,[],stream)
     {[:cond,Enum.chunk_every(s,2)],rest}
   end
-  def read([x|xs]) do
+  def read([x|xs],_) do
     cond do
       is_integer_str(x) -> {String.to_integer(x),xs}
       is_float_str(x) -> {String.to_float(x),xs}
+      is_string_str(x) -> {string_str_to_string(x),xs}
       x == "nil" -> {nil,xs}
       true -> {String.to_atom(x),xs}
     end
   end
 
-  defp read_list([],ls) do
-    buf = IO.gets("") |> comment_line |> drop_eol |> tokenize
-    read_list(buf,ls)
+  defp read_list([],ls,:stdin) do
+    buf = IO.gets("") |> tokenize
+    read_list(buf,ls,:stdin)
   end
-  defp read_list([")"|xs],ls) do
+  defp read_list([],_,:filein) do [] end
+  defp read_list([")"|xs],ls,_) do
     {ls,xs}
   end
-  defp read_list(["("|xs],ls) do
-    {s,rest} = read_list(xs,[])
-    read_list(rest,ls++[s])
+  defp read_list(["("|xs],ls,stream) do
+    {s,rest} = read_list(xs,[],stream)
+    read_list(rest,ls++[s],stream)
   end
-  defp read_list(["."|xs],ls) do
-    {s,rest} = read_list(xs,[])
+  defp read_list(["."|xs],ls,stream) do
+    {s,rest} = read_list(xs,[],stream)
     if length(s) == 1 do
       {[hd(ls)|hd(s)],rest}
     else
       {ls++s,rest}
     end
   end
-  defp read_list(x,ls) do
-    {s,rest} = read(x)
-    read_list(rest,ls++[s])
+  defp read_list(x,ls,stream) do
+    {s,rest} = read(x,stream)
+    read_list(rest,ls++[s],stream)
   end
 
-  defp read_bracket(["]"|xs],ls) do
+  defp read_bracket([],ls,:stdin) do
+    buf = IO.gets("") |> tokenize
+    read_bracket(buf,ls,:stdin)
+  end
+  defp read_bracket([],_,:filein) do [] end
+  defp read_bracket(["]"|xs],ls,_) do
     {ls,xs}
   end
-  defp read_bracket(x,ls) do
-    {s,rest} = read(x)
-    read_bracket(rest,ls++[s])
+  defp read_bracket(x,ls,stream) do
+    {s,rest} = read(x,stream)
+    read_bracket(rest,ls++[s],stream)
   end
 
 
@@ -84,19 +88,8 @@ defmodule Read do
     |> String.replace(";"," ")
     |> String.replace("->"," ")
     |> String.replace("="," = ")
+    |> String.replace("\n"," ")
     |> String.split()
-  end
-
-  defp comment_line(x) do
-    if String.slice(x,0,1) == ";" do
-      IO.gets("? ")
-    else
-      x
-    end
-  end
-
-  defp drop_eol(x) do
-    String.split(x,"\n") |> hd
   end
 
   def is_integer_str(x) do
@@ -127,4 +120,11 @@ defmodule Read do
     end
   end
 
+  def is_string_str(x) do
+    String.first(x) == "\"" and String.last(x) == "\""
+  end
+
+  def string_str_to_string(x) do
+    String.slice(x,1..String.length(x)-2)
+  end
 end

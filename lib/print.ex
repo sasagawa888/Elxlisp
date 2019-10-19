@@ -21,6 +21,11 @@ defmodule Print do
   defp print1(x) when is_tuple(x) do
     IO.write("function")
   end
+  defp print1(x) when is_binary(x) do
+    IO.write("\"")
+    IO.write(x)
+    IO.write("\"")
+  end
 
   defp print_list([]) do
     IO.write("nil")

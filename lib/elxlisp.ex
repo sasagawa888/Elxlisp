@@ -20,7 +20,7 @@ defmodule Elxlisp do
   defp repl1(env,buf) do
     try do
       IO.write("? ")
-      {s,buf1} = Read.read(buf)
+      {s,buf1} = Read.read(buf,:stdin)
       {s1,env1} = Eval.eval(s,env)
       Print.print(s1)
       repl1(env1,buf1)
