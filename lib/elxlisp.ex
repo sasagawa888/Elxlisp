@@ -61,7 +61,6 @@ defmodule Read do
       is_integer_str(x) -> {String.to_integer(x),xs}
       is_float_str(x) -> {String.to_float(x),xs}
       x == "nil" -> {nil,xs}
-      is_upper_str(x) -> {[:quote,String.to_atom(x)],xs}
       true -> {String.to_atom(x),xs}
     end
   end
@@ -185,8 +184,12 @@ defmodule Eval do
     {nil,env}
   end
   def eval(x,env) when is_atom(x) do
-    s = env[x]
-    {s,env}
+    if is_upper_atom(x) do
+      {x,env}
+    else
+      s = env[x]
+      {s,env}
+    end
   end
   def eval(x,env) when is_number(x) do
     {x,env}
@@ -386,6 +389,10 @@ defmodule Eval do
   defp bindenv([x|xs],[y|ys],env) do
     {y1,_} = eval(y,env)
     [{x,y1}|bindenv(xs,ys,env)]
+  end
+
+  def is_upper_atom(x) do
+    Enum.all?(Atom.to_charlist(x),fn(y) -> y >= 65 && y <= 90 end)
   end
 
   #----------subr---------------
