@@ -1,21 +1,14 @@
 # Elxlisp
-
-**TODO: Add description**
+Lisp 1.5 M-expression. Now under construction.
 
 ## Installation
-
-If [available in Hex](https://hex.pm/docs/publish), the package can be installed
-by adding `elxlisp` to your list of dependencies in `mix.exs`:
+mix Elxlisp
 
 ```elixir
-def deps do
-  [
-    {:elxlisp, "~> 0.1.0"}
-  ]
-end
+mix elxlisp
+Lisp 1.5 in Elixir
+? cons[A;B]
+(A . B)
+? quit[]
+goodbye
 ```
-
-Documentation can be generated with [ExDoc](https://github.com/elixir-lang/ex_doc)
-and published on [HexDocs](https://hexdocs.pm). Once published, the docs can
-be found at [https://hexdocs.pm/elxlisp](https://hexdocs.pm/elxlisp).
-
