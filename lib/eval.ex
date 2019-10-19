@@ -260,8 +260,8 @@ defmodule Eval do
     {s,_} = Read.read([])
     s
   end
-  defp funcall([:eval,x],env) do
-    {s,_} = eval(x,env)
+  defp funcall([:eval,x,y],_) do
+    {s,_} = eval(x,y)
     s
   end
   defp funcall([:print,x],env) do
@@ -276,6 +276,9 @@ defmodule Eval do
   end
   defp funcall([:reverse,[:quote,x]],_) do
     Enum.reverse(x)
+  end
+  defp funcall([:pairlis,x,y,a],_) do
+    Enum.zip(x,y)++a
   end
   defp funcall([name|args],env) do
     try do

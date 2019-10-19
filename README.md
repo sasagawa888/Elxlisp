@@ -7,6 +7,8 @@ make clone from GitHub
 ## invoke
 mix elxlisp
 
+
+## example
 ```elixir
 mix elxlisp
 Lisp 1.5 in Elixir
