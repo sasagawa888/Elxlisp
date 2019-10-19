@@ -1,0 +1,3 @@
+
+fact[n]=[eq[n;0]->1;
+        T->times[n;fact[sub1[n]]]]

@@ -30,6 +30,10 @@ A
 third
 ? third[(1 2 3)]
 3
+? load["test.meta"]
+t
+? fact[10]
+3628800
 ? quit[]
 goodbye
 ```
