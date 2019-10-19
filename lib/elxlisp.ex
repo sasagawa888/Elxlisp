@@ -126,7 +126,7 @@ defmodule Read do
     String.split(x,"\n") |> hd
   end
 
-  defp is_integer_str(x) do
+  def is_integer_str(x) do
     cond do
       x == "" -> false
       # 123
@@ -143,7 +143,7 @@ defmodule Read do
     end
   end
 
-  defp is_float_str(x) do
+  def is_float_str(x) do
     y = String.split(x,".")
     z = String.split(x,"e")
     cond do

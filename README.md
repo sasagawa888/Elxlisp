@@ -2,7 +2,7 @@
 Lisp 1.5 M-expression. Now under construction.
 
 ## Installation
-mix Elxlisp
+mix elxlisp
 
 ```elixir
 mix elxlisp
