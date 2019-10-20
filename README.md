@@ -30,3 +30,15 @@ t
 ? quit[]
 goodbye
 ```
+
+## caution
+environment is tuple of Elixir data type.
+It can be expressed as follows:
+({x 1}{y 2})   ->   [{:x,1},{:y,2}]
+
+'''elixir
+Lisp 1.5 in Elixir
+? eval[cons[x;y];({x 1}{y 2})]
+(1 . 2)
+?
+'''
