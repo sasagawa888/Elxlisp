@@ -12,6 +12,11 @@ defmodule Read do
     {s,rest} = read_list(xs,[],stream)
     {[:quote,s],rest}
   end
+  def read(["lambda","["|xs],stream) do
+    {s,rest} = read_bracket(xs,[],stream)
+    {s1,rest1} = read(rest,stream)
+    {[:lambda,s,s1],rest1}
+  end
   def read([x,"["|xs],stream) do
     {s,rest} = read_bracket(xs,[],stream)
     if Enum.at(rest,0) != "=" do
