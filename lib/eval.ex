@@ -174,50 +174,118 @@ defmodule Eval do
     Elxlisp.error("cons argument error",arg)
   end
   defp funcall([:plus|args],env) do
-    args |> evlis(env) |> plus
+    args1 = args |> evlis(env)
+    if Enum.any?(args1,fn(x) -> !is_number(x) end) do
+      Elxlisp.error("plus not number",args1)
+    end
+    args1 |> plus()
   end
   defp funcall([:difference,x,y],env) do
     {x1,_} = eval(x,env)
     {y1,_} = eval(y,env)
+    if !is_number(x1) do
+      Elxlisp.error("difference not number",x1)
+    end
+    if !is_number(y1) do
+      Elxlisp.error("difference not number",y1)
+    end
     x1 - y1
   end
-  defp funcall([:difference|_],_) do
-    throw "difference argument error"
+  defp funcall([:difference|arg],_) do
+    Elxlisp.error("difference argument error",arg)
   end
   defp funcall([:times|args],env) do
-    args |> evlis(env) |> times
+    args1 = args |> evlis(env)
+    if Enum.any?(args1,fn(x) -> !is_number(x) end) do
+      Elxlisp.error("times not number",args1)
+    end
+    args1 |> times()
   end
   defp funcall([:quotient,x,y],env) do
     {x1,_} = eval(x,env)
     {y1,_} = eval(y,env)
+    if !is_number(x1) do
+      Elxlisp.error("quotient not number",x1)
+    end
+    if !is_number(y1) do
+      Elxlisp.error("quotient not number",y1)
+    end
     div(x1,y1)
+  end
+  defp funcall([:quotient|arg],_) do
+    Elxlisp.error("quotient argument error",arg)
   end
   defp funcall([:recip,x],env) do
     {x1,_} = eval(x,env)
+    if !is_number(x1) do
+      Elxlisp.error("difference not number",x1)
+    end
     1 / x1
+  end
+  defp funcall([:recip|arg],_) do
+    Elxlisp.error("recip argument error",arg)
   end
   defp funcall([:remainder,x,y],env) do
     {x1,_} = eval(x,env)
     {y1,_} = eval(y,env)
+    if !is_number(x1) do
+      Elxlisp.error("remainder not number",x1)
+    end
+    if !is_number(y1) do
+      Elxlisp.error("remainder not number",y1)
+    end
     rem(x1,y1)
+  end
+  defp funcall([:remainder|arg],_) do
+    Elxlisp.error("remainder argument error",arg)
   end
   defp funcall([:divide,x,y],env) do
     {x1,_} = eval(x,env)
     {y1,_} = eval(y,env)
+    if !is_number(x1) do
+      Elxlisp.error("divide not number",x1)
+    end
+    if !is_number(y1) do
+      Elxlisp.error("divide not number",y1)
+    end
     [div(x1,y1),rem(x1,y1)]
+  end
+  defp funcall([:divide|arg],_) do
+    Elxlisp.error("divide argument error",arg)
   end
   defp funcall([:expt,x,y],env) do
     {x1,_} = eval(x,env)
     {y1,_} = eval(y,env)
+    if !is_number(x1) do
+      Elxlisp.error("expt not number",x1)
+    end
+    if !is_number(y1) do
+      Elxlisp.error("expt not number",y1)
+    end
     :math.pow(x1,y1)
+  end
+  defp funcall([:expt|arg],_) do
+    Elxlisp.error("expt argument error",arg)
   end
   defp funcall([:add1,x],env) do
     {x1,_} = eval(x,env)
+    if !is_number(x1) do
+      Elxlisp.error("add1 not number",x1)
+    end
     x1 + 1
+  end
+  defp funcall([:add1|arg],_) do
+    Elxlisp.error("add1 argument error",arg)
   end
   defp funcall([:sub1,x],env) do
     {x1,_} = eval(x,env)
+    if !is_number(x1) do
+      Elxlisp.error("sub1 not number",x1)
+    end
     x1 - 1
+  end
+  defp funcall([:sub1|arg],_) do
+    Elxlisp.error("sub1 argument error",arg)
   end
   defp funcall([:null,arg],env) do
     {s,_} = eval(arg,env)
@@ -227,19 +295,37 @@ defmodule Eval do
       nil
     end
   end
+  defp funcall([:null|arg],_) do
+    Elxlisp.error("null argument error",arg)
+  end
   defp funcall([:length,arg],env) do
     {s,_} = eval(arg,env)
+    if !is_list(s) do
+      Elxlisp.error("list not list",s)
+    end
     length(s)
+  end
+  defp funcall([:length|arg],_) do
+    Elxlisp.error("length argument error",arg)
   end
   defp funcall([:operate,op,x,y],env) do
     {x1,_} = eval(x,env)
     {y1,_} = eval(y,env)
+    if !is_number(x1) do
+      Elxlisp.error("operate not number",x1)
+    end
+    if !is_number(y1) do
+      Elxlisp.error("operate not number",y1)
+    end
     cond do
       op == :+ -> x1+y1
       op == :- -> x1-y1
       op == :x -> x1*y1
       op == :/ -> x1/y1
     end
+  end
+  defp funcall([:operate|arg],_) do
+    Elxlisp.error("operate argument error",arg)
   end
   defp funcall([:atom,arg],env) do
     {s,_} = eval(arg,env)
@@ -258,6 +344,9 @@ defmodule Eval do
       nil
     end
   end
+  defp funcall([:eq|arg],_) do
+    Elxlisp.error("eq argument error",arg)
+  end
   defp funcall([:equal,x,y],env) do
     {x1,_} = eval(x,env)
     {y1,_} = eval(y,env)
@@ -267,11 +356,17 @@ defmodule Eval do
       nil
     end
   end
+  defp funcall([:equql|arg],_) do
+    Elxlisp.error("equal argument error",arg)
+  end
   defp funcall([:greaterp,x,y],env) do
     {x1,_} = eval(x,env)
     {y1,_} = eval(y,env)
-    if !is_number(x1) || !is_number(y1) do
-      throw "Error: Not number >"
+    if !is_number(x1) do
+      Elxlisp.error("greaterp not number",x1)
+    end
+    if !is_number(y1) do
+      Elxlisp.error("greaterp not number",y1)
     end
     if x1 > y1 do
       :t
@@ -279,11 +374,17 @@ defmodule Eval do
       nil
     end
   end
+  defp funcall([:greaterp|arg],_) do
+    Elxlisp.error("greaterp argument error",arg)
+  end
   defp funcall([:lessp,x,y],env) do
     {x1,_} = eval(x,env)
     {y1,_} = eval(y,env)
-    if !is_number(x1) || !is_number(y1) do
-      throw "Error: Not number <"
+    if !is_number(x1) do
+      Elxlisp.error("lessp not number",x1)
+    end
+    if !is_number(y1) do
+      Elxlisp.error("lessp not number",y1)
     end
     if x1 < y1 do
       :t
@@ -291,21 +392,22 @@ defmodule Eval do
       nil
     end
   end
+  defp funcall([:lessp|arg],_) do
+    Elxlisp.error("lessp argument error",arg)
+  end
   defp funcall([:max|arg],env) do
     arg1 = evlis(arg,env)
     if !Enum.all?(arg1,fn(x) -> is_number(x) end) do
-      throw "Error: Not number max"
-    else
-      Enum.max(arg1)
+      Elxlisp.error("max not number",arg1)
     end
+    Enum.max(arg1)
   end
   defp funcall([:min|arg],env) do
     arg1 = evlis(arg,env)
     if !Enum.all?(arg1,fn(x) -> is_number(x) end) do
-      throw "Error: Not number max"
-    else
-      Enum.min(arg1)
+      Elxlisp.error("min not number",arg1)
     end
+    Enum.min(arg1)
   end
   defp funcall([:logor|arg],env) do
     arg |> evlis(env) |> logor

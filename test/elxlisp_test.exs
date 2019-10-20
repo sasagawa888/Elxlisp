@@ -23,7 +23,10 @@ defmodule ElxlispTest do
     assert Elxlisp.foo("plus[1;2]\n") == 3
     assert Elxlisp.foo("difference[1;2]\n") == -1
     assert Elxlisp.foo("times[1;2;3]\n") == 6
-    
+    assert Elxlisp.foo("quotient[1;2]\n") == 0
+    assert Elxlisp.foo("numberp[1]\n") == :t
+    assert Elxlisp.foo("numberp[1.2]\n") == :t
+    assert Elxlisp.foo("numberp[A]\n") == nil
   end
 
 end
