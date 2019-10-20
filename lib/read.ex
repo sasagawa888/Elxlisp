@@ -12,6 +12,10 @@ defmodule Read do
     {s,rest} = read_list(xs,[],stream)
     {[:quote,s],rest}
   end
+  def read(["{"|xs],stream) do
+    {s,rest} = read_tuple(xs,[],stream)
+    {s,rest}
+  end
   def read(["lambda","["|xs],stream) do
     {s,rest} = read_bracket(xs,[],stream)
     {s1,rest1} = read(rest,stream)
@@ -80,6 +84,15 @@ defmodule Read do
     read_bracket(rest,ls++[s],stream)
   end
 
+  defp read_tuple(["}"|xs],ls,_) do
+    {ls,xs}
+  end
+  defp read_tuple(x,_,stream) do
+    {s1,rest1} = read(x,stream)
+    {s2,rest2} = read(rest1,stream)
+    read_tuple(rest2,{s1,s2},stream)
+  end
+
 
   @doc """
   ## example
@@ -96,6 +109,8 @@ defmodule Read do
     |> String.replace("->"," ")
     |> String.replace("="," = ")
     |> String.replace("\n"," ")
+    |> String.replace("{"," { ")
+    |> String.replace("}"," } ")
     |> String.split()
   end
 

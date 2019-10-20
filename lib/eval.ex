@@ -44,6 +44,9 @@ defmodule Eval do
   def eval(x,env) when is_binary(x) do
     {x,env}
   end
+  def eval(x,env) when is_tuple(x) do
+    {x,env}
+  end
   def eval([:quote,x],env) do
     {x,env}
   end
@@ -121,6 +124,7 @@ defmodule Eval do
     [s|evlis(xs,env)]
   end
 
+  # environment is keyword-list e.g. [{x 1}{y 2}]
   defp bindenv([],[],env) do env end
   defp bindenv([x|xs],[y|ys],env) do
     {y1,_} = eval(y,env)
@@ -525,12 +529,29 @@ defmodule Eval do
     {s,_} = Read.read([],:stdin)
     s
   end
-  defp funcall([:eval,x,y],_) do
+  defp funcall([:eval,x,nil],_) do
+    {s,_} = eval(x,nil)
+    s
+  end
+  defp funcall([:eval,x,[:quote,y]],_) do
     {s,_} = eval(x,y)
     s
   end
   defp funcall([:eval|arg],_) do
     Elxlisp.error("eval argument error",arg)
+  end
+  defp funcall([:apply,f,a,nil],env) do
+    {f1,_} = eval(f,env)
+    {a1,_} = eval(a,env)
+    funcall([f1,a1],nil)
+  end
+  defp funcall([:apply,f,a,[:quote,e]],env) do
+    {f1,_} = eval(f,env)
+    {a1,_} = eval(a,env)
+    funcall([f1,a1],e)
+  end
+  defp funcall([:apply|arg],_) do
+    Elxlisp.error("apply argument error",arg)
   end
   defp funcall([:print,x],env) do
     {x1,_} = eval(x,env)
@@ -571,6 +592,16 @@ defmodule Eval do
       :t
     else
       nil
+    end
+  end
+  defp funcall([f|args],env) when is_tuple(f) do
+    try do
+      {:func,args1,body} = f
+      env1 = bindenv(args1,args,env)
+      {s,_} = eval(body,env1)
+      s
+    rescue
+      _ -> Elxlisp.error("lambda function error",f)
     end
   end
   defp funcall([name|args],env) do

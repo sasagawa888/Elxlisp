@@ -19,7 +19,11 @@ defmodule Print do
     print_list(x)
   end
   defp print1(x) when is_tuple(x) do
-    IO.write("function")
+    if elem(x,0) == :func do
+      IO.write("function")
+    else
+      :io.write(x)
+    end
   end
   defp print1(x) when is_binary(x) do
     IO.write("\"")
@@ -57,7 +61,7 @@ defmodule Print do
     IO.write(")")
   end
   defp print_list1([x|xs]) do
-    IO.write(x)
+    :io.write(x)
     if xs != [] and xs != nil do
       IO.write(" ")
     end
