@@ -1,6 +1,5 @@
 # Elxlisp
-Lisp 1.5 M-expression. Now under construction.
-
+Lisp 1.5 M-expression.
 
 ## Installation
 make clone from GitHub
@@ -42,3 +41,70 @@ Lisp 1.5 in Elixir
 (1 . 2)
 ?
 '''
+
+## data type
+- integer
+- float
+- string
+- symbol
+
+
+## special form
+- cond      [p1->e1;p2->e2...]
+- if
+- define    foo[x] = boo[x]
+- set       
+- setq
+- load
+- quote
+
+## primitive
+- car
+- caar
+- cdr
+- cons
+- plus
+- difference
+- times
+- quotient
+- recip
+- remainder
+- divide
+- expt
+- add1
+- sub1
+- null
+- length
+- operate
+- eq
+- equal
+- greaterp
+- lessp
+- max
+- min
+- logor
+- logand
+- leftshift
+- numberp
+- floatp
+- onep
+- zerop
+- minusp
+- listp
+- symbolp
+- read
+- eval
+- apply
+- print
+- quit
+- lambda
+- rev
+- and
+- or
+
+## Acknowledgment
+
+special thanks Dr. John McCarthy
+
+## Reference document
+[Lisp 1.5 programmer's manual](http://www.softwarepreservation.org/projects/LISP/book/LISP%201.5%20Programmers%20Manual.pdf)
