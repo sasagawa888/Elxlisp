@@ -410,18 +410,39 @@ defmodule Eval do
     Enum.min(arg1)
   end
   defp funcall([:logor|arg],env) do
-    arg |> evlis(env) |> logor
+    arg1 = arg |> evlis(env)
+    if !Enum.all?(arg1,fn(x) -> is_integer(x) end) do
+      Elxlisp.error("logor not number",arg1)
+    end
+    arg1 |> logor
   end
   defp funcall([:logand|arg],env) do
-    arg |> evlis(env) |> logand
+    arg1 = arg |> evlis(env)
+    if !Enum.all?(arg1,fn(x) -> is_integer(x) end) do
+      Elxlisp.error("logand not number",arg1)
+    end
+    arg1 |> logand
   end
   defp funcall([:logxor|arg],env) do
-    arg |> evlis(env) |> logxor
+    arg1 = arg |> evlis(env)
+    if !Enum.all?(arg1,fn(x) -> is_integer(x) end) do
+      Elxlisp.error("logxor not number",arg1)
+    end
+    arg1 |> logxor
   end
   defp funcall([:leftshift,x,n],env) do
     {x1,_} = eval(x,env)
     {n1,_} = eval(n,env)
+    if !is_integer(x1) do
+      Elxlisp.error("lessp not number",x1)
+    end
+    if !is_integer(n1) do
+      Elxlisp.error("lessp not number",n1)
+    end
     leftshift(x1,n1)
+  end
+  defp funcall([:leftshift|arg],_) do
+    Elxlisp.error("leftshift argument error",arg)
   end
   defp funcall([:numberp,arg],env) do
     {s,_} = eval(arg,env)
@@ -431,6 +452,9 @@ defmodule Eval do
       nil
     end
   end
+  defp funcall([:numberp|arg],_) do
+    Elxlisp.error("numberp argument error",arg)
+  end
   defp funcall([:floatp,arg],env) do
     {s,_} = eval(arg,env)
     if is_float(s) do
@@ -438,6 +462,9 @@ defmodule Eval do
     else
       nil
     end
+  end
+  defp funcall([:floatp|arg],_) do
+    Elxlisp.error("floatp argument error",arg)
   end
   defp funcall([:zerop,arg],env) do
     {s,_} = eval(arg,env)
@@ -447,6 +474,9 @@ defmodule Eval do
       nil
     end
   end
+  defp funcall([:zerop|arg],_) do
+    Elxlisp.error("zerop argument error",arg)
+  end
   defp funcall([:minusp,arg],env) do
     {s,_} = eval(arg,env)
     if s < 0 do
@@ -454,6 +484,9 @@ defmodule Eval do
     else
       nil
     end
+  end
+  defp funcall([:minusp|arg],_) do
+    Elxlisp.error("zerop argument error",arg)
   end
   defp funcall([:onep,arg],env) do
     {s,_} = eval(arg,env)
@@ -463,6 +496,9 @@ defmodule Eval do
       nil
     end
   end
+  defp funcall([:onep|arg],_) do
+    Elxlisp.error("onep argument error",arg)
+  end
   defp funcall([:listp,arg],env) do
     {s,_} = eval(arg,env)
     if is_list(s) do
@@ -470,6 +506,9 @@ defmodule Eval do
     else
       nil
     end
+  end
+  defp funcall([:listp|arg],_) do
+    Elxlisp.error("listp argument error",arg)
   end
   defp funcall([:symbolp,arg],env) do
     {s,_} = eval(arg,env)
@@ -479,6 +518,9 @@ defmodule Eval do
       nil
     end
   end
+  defp funcall([:symbolp|arg],_) do
+    Elxlisp.error("symbolp argument error",arg)
+  end
   defp funcall([:read],_) do
     {s,_} = Read.read([],:stdin)
     s
@@ -487,18 +529,33 @@ defmodule Eval do
     {s,_} = eval(x,y)
     s
   end
+  defp funcall([:eval|arg],_) do
+    Elxlisp.error("eval argument error",arg)
+  end
   defp funcall([:print,x],env) do
     {x1,_} = eval(x,env)
     Print.print(x1)
   end
+  defp funcall([:print|arg],_) do
+    Elxlisp.error("print argument error",arg)
+  end
   defp funcall([:quit],_) do
     throw "goodbye"
+  end
+  defp funcall([:quit|arg],_) do
+    Elxlisp.error("quit argument error",arg)
   end
   defp funcall([:lambda,args,body],_) do
     {:func,args,body}
   end
+  defp funcall([:lambda|arg],_) do
+    Elxlisp.error("lambda argument error",arg)
+  end
   defp funcall([:rev,[:quote,x]],_) do
     Enum.reverse(x)
+  end
+  defp funcall([:rev|arg],_) do
+    Elxlisp.error("rev argument error",arg)
   end
   defp funcall([:and|args],env) do
     args1 = evlis(args,env)
@@ -523,7 +580,7 @@ defmodule Eval do
       {s,_} = eval(body,env1)
       s
     rescue
-      _ -> throw "Error: Not exist function #{name}"
+      _ -> Elxlisp.error("Not exist function error",name)
     end
   end
 

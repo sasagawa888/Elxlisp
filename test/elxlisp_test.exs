@@ -21,12 +21,18 @@ defmodule ElxlispTest do
     assert Elxlisp.foo("add1[1]\n") == 2
     assert Elxlisp.foo("sub1[1]\n") == 0
     assert Elxlisp.foo("plus[1;2]\n") == 3
+    assert Elxlisp.foo("plus[1;2;3]\n") == 6
     assert Elxlisp.foo("difference[1;2]\n") == -1
     assert Elxlisp.foo("times[1;2;3]\n") == 6
     assert Elxlisp.foo("quotient[1;2]\n") == 0
     assert Elxlisp.foo("numberp[1]\n") == :t
     assert Elxlisp.foo("numberp[1.2]\n") == :t
     assert Elxlisp.foo("numberp[A]\n") == nil
+    assert Elxlisp.foo("symbolp[A]\n") == :t
+    assert Elxlisp.foo("symbolp[1]\n") == nil
+    assert Elxlisp.foo("min[1;3;2]\n") == 1
+    assert Elxlisp.foo("max[1;3;2]\n") == 3
+    assert Elxlisp.foo("length[(1 2 3)]\n") == 3
   end
 
 end
