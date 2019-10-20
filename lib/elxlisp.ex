@@ -25,7 +25,7 @@ defmodule Elxlisp do
       Print.print(s1)
       repl1(env1,buf1)
     catch
-      x -> IO.puts(x)
+      x -> IO.inspect(x)
       if x != "goodbye" do
         repl1(env,buf)
       else
@@ -34,6 +34,18 @@ defmodule Elxlisp do
     end
   end
 
+  def error(msg,dt) do
+    IO.write("Error ")
+    IO.write(msg)
+    IO.write(" ")
+    throw dt
+  end
+
+  def foo(x) do
+    {s,_} = x |> Read.tokenize() |> Read.read(:stdin)
+    {s1,_} = Eval.eval(s,[])
+    s1
+  end
 
   def stop() do
     raise("stop")

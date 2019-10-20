@@ -52,6 +52,12 @@ defmodule Eval do
     env1 = [{name,{:func,arg,right}}|env]
     {name,env1}
   end
+  def eval([:set,name,arg],env) do
+    {name1,_} = eval(name,env)
+    {s,_} = eval(arg,env)
+    env1 = [{name1,s}|env]
+    {s,env1}
+  end
   def eval([:setq,name,arg],env) do
     {s,_} = eval(arg,env)
     env1 = [{name,s}|env]
@@ -125,18 +131,47 @@ defmodule Eval do
     Enum.all?(Atom.to_charlist(x),fn(y) -> y >= 65 && y <= 90 end)
   end
 
+  #---------SUBR==================
   defp funcall([:car,arg],env) do
-    {[s|_],_} = eval(arg,env)
-    s
+    {s,_} = eval(arg,env)
+    if !is_list(s) do
+      Elxlisp.error("car not list",s)
+    end
+    [s1|_] = s
+    s1
+  end
+  defp funcall([:car|arg],_) do
+    Elxlisp.error("car argument error",arg)
+  end
+  defp funcall([:caar,arg],env) do
+    {s,_} = eval(arg,env)
+    if !is_list(s) or !is_list(hd(s)) do
+      Elxlisp.error("caar not list",s)
+    end
+    [[s1|_]|_] = s
+    s1
+  end
+  defp funcall([:caar|arg],_) do
+    Elxlisp.error("caar argument error",arg)
   end
   defp funcall([:cdr,arg],env) do
-    {[_|s],_} = eval(arg,env)
-    s
+    {s,_} = eval(arg,env)
+    if !is_list(s) do
+      Elxlisp.error("cdr not list",s)
+    end
+    [_|s1] = s
+    s1
+  end
+  defp funcall([:cdr|arg],_) do
+    Elxlisp.error("cdr argument error",arg)
   end
   defp funcall([:cons,x,y],env) do
     {s1,_} = eval(x,env)
     {s2,_} = eval(y,env)
     [s1|s2]
+  end
+  defp funcall([:cons|arg],_) do
+    Elxlisp.error("cons argument error",arg)
   end
   defp funcall([:plus|args],env) do
     args |> evlis(env) |> plus
@@ -145,6 +180,9 @@ defmodule Eval do
     {x1,_} = eval(x,env)
     {y1,_} = eval(y,env)
     x1 - y1
+  end
+  defp funcall([:difference|_],_) do
+    throw "difference argument error"
   end
   defp funcall([:times|args],env) do
     args |> evlis(env) |> times
@@ -183,11 +221,15 @@ defmodule Eval do
   end
   defp funcall([:null,arg],env) do
     {s,_} = eval(arg,env)
-    if s == nil do
+    if s == nil or s == [] do
       :t
     else
       nil
     end
+  end
+  defp funcall([:length,arg],env) do
+    {s,_} = eval(arg,env)
+    length(s)
   end
   defp funcall([:operate,op,x,y],env) do
     {x1,_} = eval(x,env)
@@ -353,11 +395,24 @@ defmodule Eval do
   defp funcall([:lambda,args,body],_) do
     {:func,args,body}
   end
-  defp funcall([:reverse,[:quote,x]],_) do
+  defp funcall([:rev,[:quote,x]],_) do
     Enum.reverse(x)
   end
-  defp funcall([:pairlis,x,y,a],_) do
-    Enum.zip(x,y)++a
+  defp funcall([:and|args],env) do
+    args1 = evlis(args,env)
+    if Enum.all?(args1,fn(x) -> x != nil end) do
+      :t
+    else
+      nil
+    end
+  end
+  defp funcall([:or|args],env) do
+    args1 = evlis(args,env)
+    if Enum.any?(args1,fn(x) -> x != nil end) do
+      :t
+    else
+      nil
+    end
   end
   defp funcall([name|args],env) do
     try do

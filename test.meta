@@ -1,3 +1,15 @@
 
-fact[n]=[eq[n;0]->1;
-        T->times[n;fact[sub1[n]]]]
+fact[n] = [eq[n;0]->1;
+          T->times[n;fact[sub1[n]]]]
+
+member[a;x] = [null[x]->F;
+               eq[a;car[x]]->T;
+               T->member[a;cdr[x]]]
+
+union[x;y] = [null[x]->y;
+              member[car[x];y]->union[cdr[x];y];
+              T->cons[car[x];union[cdr[x];y]]]
+
+intersection[x;y] = [null[x]->NIL;
+                     member[car[x];y]->cons[car[x];intersection[cdr[x];y]];
+                     T->intersection[cdr[x];y]]

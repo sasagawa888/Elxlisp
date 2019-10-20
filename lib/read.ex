@@ -31,6 +31,8 @@ defmodule Read do
       is_float_str(x) -> {String.to_float(x),xs}
       is_string_str(x) -> {string_str_to_string(x),xs}
       x == "nil" -> {nil,xs}
+      x == "NIL" -> {nil,xs}
+      x == "F" -> {nil,xs}
       true -> {String.to_atom(x),xs}
     end
   end
@@ -112,10 +114,12 @@ defmodule Read do
   def is_float_str(x) do
     y = String.split(x,".")
     z = String.split(x,"e")
+    z1 = String.split(x,"E")
     cond do
       length(y) == 1 and length(z) == 1 -> false
       length(y) == 2 and is_integer_str(hd(y)) and is_integer_str(hd(tl(y))) -> true
       length(z) == 2 and is_float_str(hd(z)) and is_integer_str(hd(tl(z))) -> true
+      length(z1) == 2 and is_float_str(hd(z1)) and is_integer_str(hd(tl(z1))) -> true
       true -> false
     end
   end

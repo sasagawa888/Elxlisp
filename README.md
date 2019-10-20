@@ -1,15 +1,6 @@
 # Elxlisp
 Lisp 1.5 M-expression. Now under construction.
 
-**TODO**
-and[]
-or[]
-maplist[]
-fix float number parse
-assoc[]
-sublis[]
-subst[]
-label[]
 
 ## Installation
 make clone from GitHub
@@ -34,6 +25,8 @@ third
 t
 ? fact[10]
 3628800
+? intersection[(A B C);(D C A)]
+(A C)
 ? quit[]
 goodbye
 ```
