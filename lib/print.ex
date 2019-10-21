@@ -1,6 +1,7 @@
 #----------------print------------
 defmodule Print do
   def print(x) do
+    #IO.inspect(x)
     print1(x)
     IO.puts("")
   end
@@ -61,7 +62,7 @@ defmodule Print do
     IO.write(")")
   end
   defp print_list1([x|xs]) do
-    :io.write(x)
+    print1(x)
     if xs != [] and xs != nil do
       IO.write(" ")
     end

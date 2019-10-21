@@ -100,9 +100,8 @@ defmodule Read do
   ["(","+","1","2",")"]
   """
   def tokenize(str) do
-    str |> String.replace("(","( ")
-    |> String.replace(")"," )")
-    |> String.replace("'","' ")
+    str |> String.replace("("," ( ")
+    |> String.replace(")"," ) ")
     |> String.replace("["," [ ")
     |> String.replace("]"," ] ")
     |> String.replace(";"," ")

@@ -15,4 +15,4 @@ intersection[x;y] = [null[x]->NIL;
                      T->intersection[cdr[x];y]]
 
 maplist[x;fn] = [null[x]->NIL;
-                 T->cons[fn[x];maplist[cdr[x];fn]]]
+                 T->cons[fn[car[x]];maplist[cdr[x];fn]]]
