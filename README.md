@@ -47,6 +47,8 @@ Lisp 1.5 in Elixir
 - float
 - string
 - symbol
+- list
+- keyword-list (for environment)
 
 
 ## special form
