@@ -1,5 +1,5 @@
 # Elxlisp
-Lisp 1.5 M-expression.
+Lisp 1.5 M-expression. Now,under construction.
 
 ## Installation
 make clone from GitHub
@@ -57,7 +57,6 @@ Lisp 1.5 in Elixir
 - define    foo[x] = boo[x]
 - set       
 - setq
-- load
 - quote
 
 ## primitive
@@ -100,9 +99,11 @@ Lisp 1.5 in Elixir
 - print
 - quit
 - lambda
+- function 
 - rev
 - and
 - or
+- load
 
 ## Acknowledgment
 

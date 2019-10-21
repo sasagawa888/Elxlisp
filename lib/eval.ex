@@ -3,7 +3,7 @@
 defmodule Eval do
   use Bitwise
   @moduledoc """
-  Evaluate S expression
+  Evaluate M expression
   Return value is tuple. {val,env}
   ## example
   iex>Eval.eval(:t,[])
@@ -28,7 +28,7 @@ defmodule Eval do
     {nil,env}
   end
   def eval([],env) do
-    {nil,env}
+    {[],env}
   end
   def eval(x,env) when is_atom(x) do
     if is_upper_atom(x) do
@@ -545,10 +545,15 @@ defmodule Eval do
     {a1,_} = eval(a,env)
     funcall([f1,a1],nil)
   end
-  defp funcall([:apply,f,a,[:quote,e]],env) do
+  defp funcall([:apply,f,a,e],env) do
     {f1,_} = eval(f,env)
     {a1,_} = eval(a,env)
-    funcall([f1,a1],e)
+    {e1,_} = eval(e,env)
+    if f1 != nil do
+      funcall([f1,a1],e1)
+    else
+      funcall([f,a1],e1)
+    end
   end
   defp funcall([:apply|arg],_) do
     Elxlisp.error("apply argument error",arg)
@@ -571,6 +576,12 @@ defmodule Eval do
   end
   defp funcall([:lambda|arg],_) do
     Elxlisp.error("lambda argument error",arg)
+  end
+  defp funcall([:function,[:lambda,args,body]],env) do
+    {:funarg,args,body,env}
+  end
+  defp funcall([:function|arg],_) do
+    Elxlisp.error("function argument error",arg)
   end
   defp funcall([:rev,[:quote,x]],_) do
     Enum.reverse(x)
@@ -595,13 +606,25 @@ defmodule Eval do
     end
   end
   defp funcall([f|args],env) when is_tuple(f) do
-    try do
-      {:func,args1,body} = f
-      env1 = bindenv(args1,args,env)
-      {s,_} = eval(body,env1)
-      s
-    rescue
-      _ -> Elxlisp.error("lambda function error",f)
+    if elem(f,0) == :func do
+      try do
+        {:func,args1,body} = f
+        env1 = bindenv(args1,args,env)
+        {s,_} = eval(body,env1)
+        s
+      rescue
+        _ -> Elxlisp.error("lambda function error",f)
+      end
+    else if elem(f,0) == :funarg do
+      try do
+        {:funarg,args1,body,env2} = f
+        env1 = bindenv(args1,args,env)
+        {s,_} = eval(body,env1++env2)
+        s
+      rescue
+        _ -> Elxlisp.error("funarg error",f)
+      end
+    end
     end
   end
   defp funcall([name|args],env) do

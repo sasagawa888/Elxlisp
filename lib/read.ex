@@ -39,8 +39,8 @@ defmodule Read do
       is_integer_str(x) -> {String.to_integer(x),xs}
       is_float_str(x) -> {String.to_float(x),xs}
       is_string_str(x) -> {string_str_to_string(x),xs}
-      x == "nil" -> {nil,xs}
-      x == "NIL" -> {nil,xs}
+      x == "nil" -> {[],xs}
+      x == "NIL" -> {[],xs}
       x == "F" -> {nil,xs}
       true -> {String.to_atom(x),xs}
     end
