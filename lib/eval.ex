@@ -117,12 +117,12 @@ defmodule Eval do
   end
   defp funcall([f|args],env) when is_list(f) do
     if Enum.at(f,0) == :lambda do
-        {:func,args1,body} = eval(f,env)
+        {{:func,args1,body},_} = eval(f,env)
         env1 = bindenv(args1,args,env)
         {s,_} = eval(body,env1)
         s
     else if Enum.at(f,0) == :function do
-        {:funarg,args1,body,env2} = eval(f,env)
+        {{:funarg,args1,body,env2},_} = eval(f,env)
         env1 = bindenv(args1,args,env)
         {s,_} = eval(body,env1++env2)
         s

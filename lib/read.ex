@@ -1,7 +1,7 @@
 defmodule Read do
   @moduledoc """
-  Read S expression and translate to list of Elixir
-  The S expression is already tokenized to list/ e.g. ["+","1","2"]
+  Read M expression and translate to list of Elixir
+  The M expression is already tokenized to list/ e.g. ["+","1","2"]
   """
   def read([],:stdin) do
     buf = IO.gets("") |> tokenize
