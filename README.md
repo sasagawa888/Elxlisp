@@ -102,7 +102,8 @@ foo[x] = boo[x]
 - apply
 - print
 - quit
-- rev
+- reverese
+- member
 - and
 - or
 - load

@@ -596,11 +596,11 @@ defmodule Eval do
   defp primitive([:quit|arg],_) do
     Elxlisp.error("quit argument error",arg)
   end
-  defp primitive([:rev,[:quote,x]],_) do
+  defp primitive([:reverse,[:quote,x]],_) do
     Enum.reverse(x)
   end
-  defp primitive([:rev|arg],_) do
-    Elxlisp.error("rev argument error",arg)
+  defp primitive([:reverse|arg],_) do
+    Elxlisp.error("reverse argument error",arg)
   end
   defp primitive([:and|args],env) do
     args1 = evlis(args,env)
@@ -617,6 +617,28 @@ defmodule Eval do
     else
       nil
     end
+  end
+  defp primitive([:not,x],env) do
+    {s,_} = eval(x,env)
+    s
+  end
+  defp primitive([:not|arg],_) do
+    Elxlisp.error("not argument error",arg)
+  end
+  defp primitive([:member,x,y],env) do
+    {x1,_} = eval(x,env)
+    {y1,_} = eval(y,env)
+    if !is_list(y1) do
+      Elxlisp.error("member not list",y1)
+    end
+    if Enum.member?(y1,x1) do
+      :t
+    else
+      nil
+    end
+  end
+  defp primitive([:member|arg],_) do
+    Elxlisp.error("member argument error",arg)
   end
 
   #----------subr---------------
@@ -677,7 +699,7 @@ defmodule Eval do
          :remainder,:divide,:expt,:add1,:sub1,:null,:length,:operate,
          :eq,:equal,:greaterp,:lessp,:max,:min,:logor,:logand,:leftshift,
          :numberp,:floatp,:onep,:zerop,:minusp,:listp,:symbolp,:read,:atom,
-         :eval,:apply,:print,:quit,:rev,:and,:or,:load]
+         :eval,:apply,:print,:quit,:reverse,:and,:or,:not,:load,:member]
     Enum.member?(y,x)
   end
 
