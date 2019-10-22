@@ -1,5 +1,6 @@
 defmodule ElxlispTest do
   use ExUnit.Case
+  import ExUnit.CaptureIO
   doctest Elxlisp
 
   test "read" do
@@ -15,6 +16,12 @@ defmodule ElxlispTest do
   test "eval" do
     assert Eval.is_upper_atom(:ABC) == true
     assert Eval.is_upper_atom(:Abc) == false
+  end
+
+  test "print" do
+    assert capture_io(fn -> Print.print([1,2]) end) == "(1 2)\n"
+    assert capture_io(fn -> Print.print([[1,2],[3,4]]) end) == "((1 2) (3 4))\n"
+    assert capture_io(fn -> Print.print([[1|2],[3|4]]) end) == "((1 . 2) (3 . 4))\n"
   end
 
   test "function" do
@@ -69,5 +76,7 @@ defmodule ElxlispTest do
     assert Elxlisp.foo("lessp[1;1]\n") == nil
     assert Elxlisp.foo("lessp[0;1]\n") == :t
   end
+
+
 
 end
