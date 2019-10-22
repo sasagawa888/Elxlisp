@@ -50,7 +50,9 @@ defmodule Read do
     buf = IO.gets("") |> tokenize
     read_list(buf,ls,:stdin)
   end
-  defp read_list([],_,:filein) do [] end
+  defp read_list([],_,:filein) do
+    Elxlisp.error("illegal list form",nil)
+  end
   defp read_list([")"|xs],ls,_) do
     {ls,xs}
   end
@@ -75,7 +77,9 @@ defmodule Read do
     buf = IO.gets("") |> tokenize
     read_bracket(buf,ls,:stdin)
   end
-  defp read_bracket([],_,:filein) do [] end
+  defp read_bracket([],_,:filein) do
+    Elxlisp.error("illegal bracket form",nil)
+  end
   defp read_bracket(["]"|xs],ls,_) do
     {ls,xs}
   end
@@ -90,6 +94,9 @@ defmodule Read do
   defp read_tuple(x,_,stream) do
     {s1,rest1} = read(x,stream)
     {s2,rest2} = read(rest1,stream)
+    if Enum.at(rest2,0) != "}" do
+      Elxlisp.error("illegal tuple form",nil)
+    end
     read_tuple(rest2,{s1,s2},stream)
   end
 
