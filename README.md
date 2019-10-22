@@ -52,12 +52,16 @@ Lisp 1.5 in Elixir
 
 
 ## special form
-- cond      [p1->e1;p2->e2...]
+- cond      
+[p1->e1;p2->e2...]
 - if
-- define    foo[x] = boo[x]
+- define    
+foo[x] = boo[x]
 - set       
 - setq
 - quote
+- lambda
+- function
 
 ## primitive
 - car
@@ -98,8 +102,6 @@ Lisp 1.5 in Elixir
 - apply
 - print
 - quit
-- lambda
-- function 
 - rev
 - and
 - or
