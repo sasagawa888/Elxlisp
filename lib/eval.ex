@@ -81,11 +81,11 @@ defmodule Eval do
     env1 = bindenv(arg,make_nil(arg),env)
     evprog(body,env1)
   end
-  def eval([:lambda,args,body],_) do
-    {:func,args,body}
+  def eval([:lambda,args,body],env) do
+    {{:func,args,body},env}
   end
   def eval([:function,[:lambda,args,body]],env) do
-    {:funarg,args,body,env}
+    {{:funarg,args,body,env},env}
   end
   def eval([:load,x],env) do
     {x1,_} = eval(x,env)
