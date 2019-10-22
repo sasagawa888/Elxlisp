@@ -577,7 +577,8 @@ defmodule Eval do
     Elxlisp.error("eval argument error",arg)
   end
   defp primitive([:apply,f,a,e],env) do
-    funcall([f|a],env++e)
+    {a1,_} = eval(a,env)
+    funcall([f|a1],env++e)
   end
   defp primitive([:apply|arg],_) do
     Elxlisp.error("apply argument error",arg)
