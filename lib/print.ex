@@ -1,7 +1,7 @@
-#----------------print------------
+# ----------------print------------
 defmodule Print do
   def print(x) do
-    #IO.inspect(x)
+    # IO.inspect(x)
     print1(x)
     IO.puts("")
   end
@@ -9,6 +9,7 @@ defmodule Print do
   defp print1(x) when is_number(x) do
     IO.write(x)
   end
+
   defp print1(x) when is_atom(x) do
     cond do
       x == :t -> IO.write("T")
@@ -16,16 +17,19 @@ defmodule Print do
       true -> IO.write(x)
     end
   end
+
   defp print1(x) when is_list(x) do
     print_list(x)
   end
+
   defp print1(x) when is_tuple(x) do
-    if elem(x,0) == :func do
+    if elem(x, 0) == :func do
       IO.write("function")
     else
       :io.write(x)
     end
   end
+
   defp print1(x) when is_binary(x) do
     IO.write("\"")
     IO.write(x)
@@ -35,12 +39,15 @@ defmodule Print do
   defp print_list([]) do
     IO.write("nil")
   end
-  defp print_list([x|xs]) do
+
+  defp print_list([x | xs]) do
     IO.write("(")
     print1(x)
+
     if xs != [] and xs != nil do
       IO.write(" ")
     end
+
     print_list1(xs)
   end
 
@@ -53,19 +60,24 @@ defmodule Print do
       IO.write(")")
     end
   end
+
   defp print_list1(x) when is_number(x) do
     IO.write(". ")
     IO.write(x)
     IO.write(")")
   end
+
   defp print_list1([]) do
     IO.write(")")
   end
-  defp print_list1([x|xs]) do
+
+  defp print_list1([x | xs]) do
     print1(x)
+
     if xs != [] and xs != nil do
       IO.write(" ")
     end
+
     print_list1(xs)
   end
 end

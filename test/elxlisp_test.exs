@@ -19,16 +19,16 @@ defmodule ElxlispTest do
   end
 
   test "print" do
-    assert capture_io(fn -> Print.print([1,2]) end) == "(1 2)\n"
-    assert capture_io(fn -> Print.print([[1,2],[3,4]]) end) == "((1 2) (3 4))\n"
-    assert capture_io(fn -> Print.print([[1|2],[3|4]]) end) == "((1 . 2) (3 . 4))\n"
+    assert capture_io(fn -> Print.print([1, 2]) end) == "(1 2)\n"
+    assert capture_io(fn -> Print.print([[1, 2], [3, 4]]) end) == "((1 2) (3 4))\n"
+    assert capture_io(fn -> Print.print([[1 | 2], [3 | 4]]) end) == "((1 . 2) (3 . 4))\n"
   end
 
   test "function" do
     assert Elxlisp.foo("car[(A B)]\n") == :A
     assert Elxlisp.foo("caar[((A B) C)]\n") == :A
     assert Elxlisp.foo("cdr[(A B)]\n") == [:B]
-    assert Elxlisp.foo("cons[A;B]\n") == [:A|:B]
+    assert Elxlisp.foo("cons[A;B]\n") == [:A | :B]
     assert Elxlisp.foo("add1[1]\n") == 2
     assert Elxlisp.foo("sub1[1]\n") == 0
     assert Elxlisp.foo("plus[1;2]\n") == 3
@@ -39,7 +39,7 @@ defmodule ElxlispTest do
     assert Elxlisp.foo("quotient[5;2]\n") == 2
     assert Elxlisp.foo("recip[2]\n") == 0.5
     assert Elxlisp.foo("remainder[5;2]\n") == 1
-    assert Elxlisp.foo("divide[5;2]\n") == [2,1]
+    assert Elxlisp.foo("divide[5;2]\n") == [2, 1]
     assert Elxlisp.foo("expt[2;3]\n") == 8
     assert Elxlisp.foo("add1[1]\n") == 2
     assert Elxlisp.foo("sub1[1]\n") == 0
@@ -76,7 +76,4 @@ defmodule ElxlispTest do
     assert Elxlisp.foo("lessp[1;1]\n") == nil
     assert Elxlisp.foo("lessp[0;1]\n") == :t
   end
-
-
-
 end

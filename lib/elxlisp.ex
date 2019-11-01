@@ -9,41 +9,43 @@ defmodule Elxlisp do
   """
   def repl() do
     IO.puts("Lisp 1.5 in Elixir")
-    repl1([],[])
+    repl1([], [])
   end
 
-  #repl1 is helper function for repl
-  #It has environment and buffer
-  #The environment is association list. e.g. [[:a,1],[;b,2]]
-  #the buffer is list. Each elements are string
+  # repl1 is helper function for repl
+  # It has environment and buffer
+  # The environment is association list. e.g. [[:a,1],[;b,2]]
+  # the buffer is list. Each elements are string
 
-  defp repl1(env,buf) do
+  defp repl1(env, buf) do
     try do
       IO.write("? ")
-      {s,buf1} = Read.read(buf,:stdin)
-      {s1,env1} = Eval.eval(s,env)
+      {s, buf1} = Read.read(buf, :stdin)
+      {s1, env1} = Eval.eval(s, env)
       Print.print(s1)
-      repl1(env1,buf1)
+      repl1(env1, buf1)
     catch
-      x -> IO.inspect(x)
-      if x != "goodbye" do
-        repl1(env,buf)
-      else
-        true
-      end
+      x ->
+        IO.inspect(x)
+
+        if x != "goodbye" do
+          repl1(env, buf)
+        else
+          true
+        end
     end
   end
 
-  def error(msg,dt) do
+  def error(msg, dt) do
     IO.write("Error ")
     IO.write(msg)
     IO.write(" ")
-    throw dt
+    throw(dt)
   end
 
   def foo(x) do
-    {s,_} = x |> Read.tokenize() |> Read.read(:stdin)
-    {s1,_} = Eval.eval(s,[])
+    {s, _} = x |> Read.tokenize() |> Read.read(:stdin)
+    {s1, _} = Eval.eval(s, [])
     s1
   end
 

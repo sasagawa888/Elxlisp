@@ -102,7 +102,7 @@ foo[x] = boo[x]
 - apply
 - print
 - quit
-- reverese
+- reverse
 - member
 - and
 - or
