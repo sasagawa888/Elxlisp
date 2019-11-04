@@ -21,7 +21,7 @@ defmodule Elxlisp do
     try do
       IO.write("? ")
       {s, buf1} = Read.read(buf, :stdin)
-      {s1, env1} = Eval.eval(s, env, :para)
+      {s1, env1} = Eval.eval(s, env, :seq)
       Print.print(s1)
       repl1(env1, buf1)
     catch

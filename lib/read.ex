@@ -102,7 +102,6 @@ defmodule Read do
     read_bracket(rest, ls ++ [s], stream)
   end
 
-
   @doc """
   ## example
   iex>Read.tokenize("(+ 1 2)")

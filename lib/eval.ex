@@ -1,15 +1,16 @@
 defmodule Worker do
   def eval do
     receive do
-      {sender,{c,x,env}} -> send sender,{:answer,[c, eval1(x,env)] }
+      {sender, {c, x, env}} -> send(sender, {:answer, [c, eval1(x, env)]})
     end
   end
 
-  def eval1(x,env) do
-    {s,_} = Eval.eval(x,env,:seq)
+  def eval1(x, env) do
+    {s, _} = Eval.eval(x, env, :seq)
     s
   end
 end
+
 # ----------------eval-------------
 defmodule Eval do
   use Bitwise
@@ -51,7 +52,7 @@ defmodule Eval do
     if is_upper_atom(x) do
       {x, env}
     else
-      s = assoc(x,env)
+      s = assoc(x, env)
       {s, env}
     end
   end
@@ -74,20 +75,20 @@ defmodule Eval do
 
   def eval([:define, left, right], env, _) do
     [name | arg] = left
-    env1 = [[name| {:func, arg, right}] | env]
+    env1 = [[name | {:func, arg, right}] | env]
     {name, env1}
   end
 
   def eval([:set, name, arg], env, mode) do
     {name1, _} = eval(name, env, mode)
     {s, _} = eval(arg, env, mode)
-    env1 = [[name1|s] | env]
+    env1 = [[name1 | s] | env]
     {s, env1}
   end
 
   def eval([:setq, name, arg], env, mode) do
     {s, _} = eval(arg, env, mode)
-    env1 = [[name|s] | env]
+    env1 = [[name | s] | env]
     {s, env1}
   end
 
@@ -130,20 +131,22 @@ defmodule Eval do
     {:t, env1}
   end
 
-  def eval([:time,x], env, mode) do
-    {time, {result,_}} = :timer.tc(fn() -> eval(x,env,mode) end)
-    IO.inspect "time: #{time} micro second"
-    IO.inspect "-------------"
-    {result,env}
+  def eval([:time, x], env, mode) do
+    {time, {result, _}} = :timer.tc(fn -> eval(x, env, mode) end)
+    IO.inspect("time: #{time} micro second")
+    IO.inspect("-------------")
+    {result, env}
   end
 
   def eval(x, env, mode) when is_list(x) do
-    [f|args] = x
+    [f | args] = x
+
     if mode == :para do
-      {funcall(f, paraevlis(args,env), env), env}
-    else if mode == :seq do
-      {funcall(f, evlis(args,env), env), env}
-    end
+      {funcall(f, paraevlis(args, env), env), env}
+    else
+      if mode == :seq do
+        {funcall(f, evlis(args, env), env), env}
+      end
     end
   end
 
@@ -152,13 +155,13 @@ defmodule Eval do
     if is_subr(f) do
       primitive([f | args])
     else
-      expr = assoc(f,env)
+      expr = assoc(f, env)
 
       if expr == nil do
         Elxlisp.error("Not exist function error", f)
       end
 
-      {:func, args1, body} = assoc(f,env)
+      {:func, args1, body} = assoc(f, env)
       env1 = pairlis(args1, args, env)
       {s, _} = eval(body, env1, :seq)
       s
@@ -212,6 +215,7 @@ defmodule Eval do
     [nil | make_nil(xs)]
   end
 
+  #sequential evlis
   defp evlis([], _) do
     []
   end
@@ -221,51 +225,65 @@ defmodule Eval do
     [s | evlis(xs, env)]
   end
 
-  # paralell evlis
-  defp paraevlis(x,env) do
-    x1 = paraevlis1(x,env,0)
+  # parallel evlis
+  defp paraevlis(x, env) do
+    x1 = paraevlis1(x, env, 0)
     c = length(x) - length(x1)
-    x2 = paraevlis2(c,[])
-    x1++x2
+    x2 = paraevlis2(c, [])
+
+    (x1 ++ x2)
     |> Enum.sort()
-    |> Enum.map(fn(x) -> Enum.at(x,1) end)
+    |> Enum.map(fn x -> Enum.at(x, 1) end)
   end
 
-  defp paraevlis1([],_,_) do [] end
-  defp paraevlis1([x|xs],env,c) do
+  defp paraevlis1([], _, _) do
+    []
+  end
+
+  defp paraevlis1([x | xs], env, c) do
     if is_fun(x) do
-      pid = spawn(Worker,:eval,[])
-      send pid, {self(),{c,x,env}}
-      paraevlis1(xs,env,c+1)
+      pid = spawn(Worker, :eval, [])
+      send(pid, {self(), {c, x, env}})
+      paraevlis1(xs, env, c + 1)
     else
-      {s,_} = eval(x,env,:seq)
-      [[c,s]|paraevlis1(xs,env,c+1)]
+      {s, _} = eval(x, env, :seq)
+      [[c, s] | paraevlis1(xs, env, c + 1)]
     end
   end
 
-  defp paraevlis2(0,res) do res end
-  defp paraevlis2(c,res) do
+  defp paraevlis2(0, res) do
+    res
+  end
+
+  defp paraevlis2(c, res) do
     receive do
-      {:answer,ls} ->
-        paraevlis2(c-1,[ls|res])
+      {:answer, ls} ->
+        paraevlis2(c - 1, [ls | res])
     end
   end
-
 
   def is_upper_atom(x) do
     Enum.all?(Atom.to_charlist(x), fn y -> y >= 65 && y <= 90 end)
   end
 
-  def assoc(_,[]) do nil end
-  def assoc(x,[[x|y]|_]) do
+  def assoc(_, []) do
+    nil
+  end
+
+  def assoc(x, [[x | y] | _]) do
     y
   end
-  def assoc(x,[_|y]) do
-    assoc(x,y)
+
+  def assoc(x, [_ | y]) do
+    assoc(x, y)
   end
-  def pairlis([],_,env) do env end
-  def pairlis([x|xs],[y|ys],env) do
-    [[x|y]|pairlis(xs,ys,env)]
+
+  def pairlis([], _, env) do
+    env
+  end
+
+  def pairlis([x | xs], [y | ys], env) do
+    [[x | y] | pairlis(xs, ys, env)]
   end
 
   # ---------SUBR==================
@@ -925,11 +943,10 @@ defmodule Eval do
 
   # user defined function
   def is_fun(x) do
-    if is_list(x) and !is_subr(Enum.at(x,0)) do
+    if is_list(x) and !is_subr(Enum.at(x, 0)) do
       true
     else
       false
     end
   end
-
 end

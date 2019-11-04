@@ -16,10 +16,10 @@ defmodule ElxlispTest do
   test "eval" do
     assert Eval.is_upper_atom(:ABC) == true
     assert Eval.is_upper_atom(:Abc) == false
-    assert Eval.assoc(:a,[[:a|1],[:b|2]]) == 1
-    assert Eval.assoc(:b,[[:a|1],[:b|2]]) == 2
-    assert Eval.assoc(:c,[[:a|1],[:b|2]]) == nil
-    assert Eval.pairlis([:a,:b],[1,2],[]) == [[:a|1],[:b|2]]
+    assert Eval.assoc(:a, [[:a | 1], [:b | 2]]) == 1
+    assert Eval.assoc(:b, [[:a | 1], [:b | 2]]) == 2
+    assert Eval.assoc(:c, [[:a | 1], [:b | 2]]) == nil
+    assert Eval.pairlis([:a, :b], [1, 2], []) == [[:a | 1], [:b | 2]]
   end
 
   test "print" do
@@ -60,10 +60,10 @@ defmodule ElxlispTest do
     assert Elxlisp.foo("min[1;3;2]\n") == 1
     assert Elxlisp.foo("max[1;3;2]\n") == 3
     assert Elxlisp.foo("length[(1 2 3)]\n") == 3
-    #assert Elxlisp.foo("operate[+;2;3]\n") == 5
-    #assert Elxlisp.foo("operate[-;2;3]\n") == -1
-    #assert Elxlisp.foo("operate[x;2;3]\n") == 6
-    #assert Elxlisp.foo("operate[/;6;3]\n") == 2
+    # assert Elxlisp.foo("operate[+;2;3]\n") == 5
+    # assert Elxlisp.foo("operate[-;2;3]\n") == -1
+    # assert Elxlisp.foo("operate[x;2;3]\n") == 6
+    # assert Elxlisp.foo("operate[/;6;3]\n") == 2
     assert Elxlisp.foo("atom[x]\n") == :t
     assert Elxlisp.foo("atom[X]\n") == :t
     assert Elxlisp.foo("atom[1]\n") == :t
