@@ -2,6 +2,9 @@
 fact[n] = [eq[n;0]->1;
           T->times[n;fact[sub1[n]]]]
 
+ack[m;n] = [eq[m;0]->add1[n];
+            eq[n;0]->ack[sub1[m];1];
+            T->ack[sub1[m];ack[m;sub1[n]]]]
 
 union[x;y] = [null[x]->y;
               member[car[x];y]->union[cdr[x];y];

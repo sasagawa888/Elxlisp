@@ -21,7 +21,7 @@ defmodule Elxlisp do
     try do
       IO.write("? ")
       {s, buf1} = Read.read(buf, :stdin)
-      {s1, env1} = Eval.eval(s, env)
+      {s1, env1} = Eval.eval(s, env, :para)
       Print.print(s1)
       repl1(env1, buf1)
     catch
@@ -45,7 +45,7 @@ defmodule Elxlisp do
 
   def foo(x) do
     {s, _} = x |> Read.tokenize() |> Read.read(:stdin)
-    {s1, _} = Eval.eval(s, [])
+    {s1, _} = Eval.eval(s, [], :seq)
     s1
   end
 

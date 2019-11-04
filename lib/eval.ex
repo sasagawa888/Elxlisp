@@ -1,3 +1,15 @@
+defmodule Worker do
+  def eval do
+    receive do
+      {sender,{c,x,env}} -> send sender,{:answer,[c, eval1(x,env)] }
+    end
+  end
+
+  def eval1(x,env) do
+    {s,_} = Eval.eval(x,env,:seq)
+    s
+  end
+end
 # ----------------eval-------------
 defmodule Eval do
   use Bitwise
@@ -6,36 +18,36 @@ defmodule Eval do
   Evaluate M expression
   Return value is tuple. {val,env}
   ## example
-  iex>Eval.eval(:t,[])
+  iex>Eval.eval(:t,[],:para)
   {:t,[]}
-  iex>Eval.eval(nil,[])
+  iex>Eval.eval(nil,[],:para)
   {nil,[]}
-  iex>Eval.eval(1,[])
+  iex>Eval.eval(1,[],:para)
   {1,[]}
-  iex>Eval.eval(:a,[[:a|1]])
+  iex>Eval.eval(:a,[[:a|1]],:para)
   {1,[[:a|1]]}
   """
-  def eval(:t, env) do
+  def eval(:t, env, _) do
     {:t, env}
   end
 
-  def eval(:T, env) do
+  def eval(:T, env, _) do
     {:t, env}
   end
 
-  def eval(nil, env) do
+  def eval(nil, env, _) do
     {nil, env}
   end
 
-  def eval(:NIL, env) do
+  def eval(:NIL, env, _) do
     {nil, env}
   end
 
-  def eval([], env) do
+  def eval([], env, _) do
     {[], env}
   end
 
-  def eval(x, env) when is_atom(x) do
+  def eval(x, env, _) when is_atom(x) do
     if is_upper_atom(x) do
       {x, env}
     else
@@ -44,70 +56,70 @@ defmodule Eval do
     end
   end
 
-  def eval(x, env) when is_number(x) do
+  def eval(x, env, _) when is_number(x) do
     {x, env}
   end
 
-  def eval(x, env) when is_binary(x) do
+  def eval(x, env, _) when is_binary(x) do
     {x, env}
   end
 
-  def eval(x, env) when is_tuple(x) do
+  def eval(x, env, _) when is_tuple(x) do
     {x, env}
   end
 
-  def eval([:quote, x], env) do
+  def eval([:quote, x], env, _) do
     {x, env}
   end
 
-  def eval([:define, left, right], env) do
+  def eval([:define, left, right], env, _) do
     [name | arg] = left
     env1 = [[name| {:func, arg, right}] | env]
     {name, env1}
   end
 
-  def eval([:set, name, arg], env) do
-    {name1, _} = eval(name, env)
-    {s, _} = eval(arg, env)
-    env1 = [{name1, s} | env]
+  def eval([:set, name, arg], env, mode) do
+    {name1, _} = eval(name, env, mode)
+    {s, _} = eval(arg, env, mode)
+    env1 = [[name1|s] | env]
     {s, env1}
   end
 
-  def eval([:setq, name, arg], env) do
-    {s, _} = eval(arg, env)
-    env1 = [{name, s} | env]
+  def eval([:setq, name, arg], env, mode) do
+    {s, _} = eval(arg, env, mode)
+    env1 = [[name|s] | env]
     {s, env1}
   end
 
-  def eval([:if, x, y, z], env) do
-    {x1, _} = eval(x, env)
+  def eval([:if, x, y, z], env, mode) do
+    {x1, _} = eval(x, env, mode)
 
     if x1 != nil do
-      eval(y, env)
+      eval(y, env, mode)
     else
-      eval(z, env)
+      eval(z, env, mode)
     end
   end
 
-  def eval([:cond, arg], env) do
+  def eval([:cond, arg], env, _) do
     evcond(arg, env)
   end
 
-  def eval([:prog, arg | body], env) do
+  def eval([:prog, arg | body], env, _) do
     env1 = pairlis(arg, make_nil(arg), env)
     evprog(body, env1)
   end
 
-  def eval([:lambda, args, body], env) do
+  def eval([:lambda, args, body], env, _) do
     {{:func, args, body}, env}
   end
 
-  def eval([:function, [:lambda, args, body]], env) do
+  def eval([:function, [:lambda, args, body]], env, _) do
     {{:funarg, args, body, env}, env}
   end
 
-  def eval([:load, x], env) do
-    {x1, _} = eval(x, env)
+  def eval([:load, x], env, mode) do
+    {x1, _} = eval(x, env, mode)
     {status, string} = File.read(x1)
 
     if status == :error do
@@ -118,16 +130,21 @@ defmodule Eval do
     {:t, env1}
   end
 
-  def eval([:time,x], env) do
-    {time, {result,_}} = :timer.tc(fn() -> eval(x,env) end)
+  def eval([:time,x], env, mode) do
+    {time, {result,_}} = :timer.tc(fn() -> eval(x,env,mode) end)
     IO.inspect "time: #{time} micro second"
     IO.inspect "-------------"
     {result,env}
   end
 
-  def eval(x, env) when is_list(x) do
+  def eval(x, env, mode) when is_list(x) do
     [f|args] = x
-    {funcall(f, evlis(args,env), env), env}
+    if mode == :para do
+      {funcall(f, paraevlis(args,env), env), env}
+    else if mode == :seq do
+      {funcall(f, evlis(args,env), env), env}
+    end
+    end
   end
 
   # -----------apply--------------------------
@@ -143,22 +160,22 @@ defmodule Eval do
 
       {:func, args1, body} = assoc(f,env)
       env1 = pairlis(args1, args, env)
-      {s, _} = eval(body, env1)
+      {s, _} = eval(body, env1, :seq)
       s
     end
   end
 
   defp funcall(f, args, env) when is_list(f) do
     if Enum.at(f, 0) == :lambda do
-      {{:func, args1, body}, _} = eval(f, env)
+      {{:func, args1, body}, _} = eval(f, env, :seq)
       env1 = pairlis(args1, args, env)
-      {s, _} = eval(body, env1)
+      {s, _} = eval(body, env1, :seq)
       s
     else
       if Enum.at(f, 0) == :function do
-        {{:funarg, args1, body, env2}, _} = eval(f, env)
+        {{:funarg, args1, body, env2}, _} = eval(f, env, :seq)
         env1 = pairlis(args1, args, env)
-        {s, _} = eval(body, env1 ++ env2)
+        {s, _} = eval(body, env1 ++ env2, :seq)
         s
       end
     end
@@ -169,21 +186,21 @@ defmodule Eval do
   end
 
   defp evcond([[p, e] | rest], env) do
-    {s, _} = eval(p, env)
+    {s, _} = eval(p, env, :seq)
 
     if s != nil do
-      eval(e, env)
+      eval(e, env, :seq)
     else
       evcond(rest, env)
     end
   end
 
   defp evprog([x], env) do
-    eval(x, env)
+    eval(x, env, :seq)
   end
 
   defp evprog([x | xs], env) do
-    {_, env1} = eval(x, env)
+    {_, env1} = eval(x, env, :seq)
     evprog(xs, env1)
   end
 
@@ -200,9 +217,40 @@ defmodule Eval do
   end
 
   defp evlis([x | xs], env) do
-    {s, env} = eval(x, env)
+    {s, env} = eval(x, env, :seq)
     [s | evlis(xs, env)]
   end
+
+  # paralell evlis
+  defp paraevlis(x,env) do
+    x1 = paraevlis1(x,env,0)
+    c = length(x) - length(x1)
+    x2 = paraevlis2(c,[])
+    x1++x2
+    |> Enum.sort()
+    |> Enum.map(fn(x) -> Enum.at(x,1) end)
+  end
+
+  defp paraevlis1([],_,_) do [] end
+  defp paraevlis1([x|xs],env,c) do
+    if is_fun(x) do
+      pid = spawn(Worker,:eval,[])
+      send pid, {self(),{c,x,env}}
+      paraevlis1(xs,env,c+1)
+    else
+      {s,_} = eval(x,env,:seq)
+      [[c,s]|paraevlis1(xs,env,c+1)]
+    end
+  end
+
+  defp paraevlis2(0,res) do res end
+  defp paraevlis2(c,res) do
+    receive do
+      {:answer,ls} ->
+        paraevlis2(c-1,[ls|res])
+    end
+  end
+
 
   def is_upper_atom(x) do
     Enum.all?(Atom.to_charlist(x), fn y -> y >= 65 && y <= 90 end)
@@ -663,12 +711,12 @@ defmodule Eval do
   end
 
   defp primitive([:eval, x, nil]) do
-    {s, _} = eval(x, nil)
+    {s, _} = eval(x, nil, :seq)
     s
   end
 
   defp primitive([:eval, x, [:quote, y]]) do
-    {s, _} = eval(x, y)
+    {s, _} = eval(x, y, :seq)
     s
   end
 
@@ -759,7 +807,7 @@ defmodule Eval do
 
   defp load(env, buf) do
     {s, buf1} = Read.read(buf, :filein)
-    {_, env1} = Eval.eval(s, env)
+    {_, env1} = Eval.eval(s, env, :seq)
     load(env1, buf1)
   end
 
@@ -876,7 +924,7 @@ defmodule Eval do
   end
 
   # user defined function
-  def is_function(x) do
+  def is_fun(x) do
     if is_list(x) and !is_subr(Enum.at(x,0)) do
       true
     else
