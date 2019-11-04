@@ -16,6 +16,9 @@ defmodule ElxlispTest do
   test "eval" do
     assert Eval.is_upper_atom(:ABC) == true
     assert Eval.is_upper_atom(:Abc) == false
+    assert Eval.assoc(:a,[[:a|1],[:b|2]]) == 1
+    assert Eval.assoc(:b,[[:a|1],[:b|2]]) == 2
+    assert Eval.assoc(:c,[[:a|1],[:b|2]]) == nil
   end
 
   test "print" do

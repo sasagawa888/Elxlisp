@@ -12,8 +12,8 @@ defmodule Eval do
   {nil,[]}
   iex>Eval.eval(1,[])
   {1,[]}
-  iex>Eval.eval(:a,[{:a,1}])
-  {1,[{:a,1}]}
+  iex>Eval.eval(:a,[[:a|1]])
+  {1,[[:a|1]]}
   """
   def eval(:t, env) do
     {:t, env}
@@ -39,7 +39,7 @@ defmodule Eval do
     if is_upper_atom(x) do
       {x, env}
     else
-      s = env[x]
+      s = assoc(x,env)
       {s, env}
     end
   end
@@ -62,7 +62,7 @@ defmodule Eval do
 
   def eval([:define, left, right], env) do
     [name | arg] = left
-    env1 = [{name, {:func, arg, right}} | env]
+    env1 = [[name| {:func, arg, right}] | env]
     {name, env1}
   end
 
@@ -119,28 +119,29 @@ defmodule Eval do
   end
 
   def eval(x, env) when is_list(x) do
-    {funcall(x, env), env}
+    [f|args] = x
+    {funcall(f, args, env), env}
   end
 
   # -----------apply--------------------------
-  defp funcall([name | args], env) when is_atom(name) do
-    if is_subr(name) do
-      primitive([name | args], env)
+  defp funcall(f, args, env) when is_atom(f) do
+    if is_subr(f) do
+      primitive([f | args], env)
     else
-      expr = env[name]
+      expr = assoc(f,env)
 
       if expr == nil do
-        Elxlisp.error("Not exist function error", name)
+        Elxlisp.error("Not exist function error", f)
       end
 
-      {:func, args1, body} = env[name]
+      {:func, args1, body} = assoc(f,env)
       env1 = bindenv(args1, args, env)
       {s, _} = eval(body, env1)
       s
     end
   end
 
-  defp funcall([f | args], env) when is_list(f) do
+  defp funcall(f, args, env) when is_list(f) do
     if Enum.at(f, 0) == :lambda do
       {{:func, args1, body}, _} = eval(f, env)
       env1 = bindenv(args1, args, env)
@@ -203,12 +204,21 @@ defmodule Eval do
 
   defp bindenv([x | xs], [y | ys], env) do
     {y1, _} = eval(y, env)
-    [{x, y1} | bindenv(xs, ys, env)]
+    [[x|y1] | bindenv(xs, ys, env)]
   end
 
   def is_upper_atom(x) do
     Enum.all?(Atom.to_charlist(x), fn y -> y >= 65 && y <= 90 end)
   end
+
+  def assoc(_,[]) do nil end
+  def assoc(x,[[x|y]|_]) do
+    y
+  end
+  def assoc(x,[_|y]) do
+    assoc(x,y)
+  end
+
 
   # ---------SUBR==================
   defp primitive([:car, arg], env) do
@@ -749,7 +759,7 @@ defmodule Eval do
 
   defp primitive([:apply, f, a, e], env) do
     {a1, _} = eval(a, env)
-    funcall([f | a1], env ++ e)
+    funcall(f, a1, env ++ e)
   end
 
   defp primitive([:apply | arg], _) do

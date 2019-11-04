@@ -17,11 +17,6 @@ defmodule Read do
     {[:quote, s], rest}
   end
 
-  def read(["{" | xs], stream) do
-    {s, rest} = read_tuple(xs, [], stream)
-    {s, rest}
-  end
-
   def read(["lambda", "[" | xs], stream) do
     {s, rest} = read_bracket(xs, [], stream)
     {s1, rest1} = read(rest, stream)
@@ -107,20 +102,6 @@ defmodule Read do
     read_bracket(rest, ls ++ [s], stream)
   end
 
-  defp read_tuple(["}" | xs], ls, _) do
-    {ls, xs}
-  end
-
-  defp read_tuple(x, _, stream) do
-    {s1, rest1} = read(x, stream)
-    {s2, rest2} = read(rest1, stream)
-
-    if Enum.at(rest2, 0) != "}" do
-      Elxlisp.error("illegal tuple form", nil)
-    end
-
-    read_tuple(rest2, {s1, s2}, stream)
-  end
 
   @doc """
   ## example
