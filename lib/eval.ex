@@ -94,7 +94,7 @@ defmodule Eval do
   end
 
   def eval([:prog, arg | body], env) do
-    env1 = bindenv(arg, make_nil(arg), env)
+    env1 = pairlis(arg, make_nil(arg), env)
     evprog(body, env1)
   end
 
@@ -120,13 +120,13 @@ defmodule Eval do
 
   def eval(x, env) when is_list(x) do
     [f|args] = x
-    {funcall(f, args, env), env}
+    {funcall(f, evlis(args,env), env), env}
   end
 
   # -----------apply--------------------------
   defp funcall(f, args, env) when is_atom(f) do
     if is_subr(f) do
-      primitive([f | args], env)
+      primitive([f | args])
     else
       expr = assoc(f,env)
 
@@ -135,7 +135,7 @@ defmodule Eval do
       end
 
       {:func, args1, body} = assoc(f,env)
-      env1 = bindenv(args1, args, env)
+      env1 = pairlis(args1, args, env)
       {s, _} = eval(body, env1)
       s
     end
@@ -144,13 +144,13 @@ defmodule Eval do
   defp funcall(f, args, env) when is_list(f) do
     if Enum.at(f, 0) == :lambda do
       {{:func, args1, body}, _} = eval(f, env)
-      env1 = bindenv(args1, args, env)
+      env1 = pairlis(args1, args, env)
       {s, _} = eval(body, env1)
       s
     else
       if Enum.at(f, 0) == :function do
         {{:funarg, args1, body, env2}, _} = eval(f, env)
-        env1 = bindenv(args1, args, env)
+        env1 = pairlis(args1, args, env)
         {s, _} = eval(body, env1 ++ env2)
         s
       end
@@ -197,16 +197,6 @@ defmodule Eval do
     [s | evlis(xs, env)]
   end
 
-  # environment is keyword-list e.g. [{x 1}{y 2}]
-  defp bindenv([], [], env) do
-    env
-  end
-
-  defp bindenv([x | xs], [y | ys], env) do
-    {y1, _} = eval(y, env)
-    [[x|y1] | bindenv(xs, ys, env)]
-  end
-
   def is_upper_atom(x) do
     Enum.all?(Atom.to_charlist(x), fn y -> y >= 65 && y <= 90 end)
   end
@@ -218,624 +208,540 @@ defmodule Eval do
   def assoc(x,[_|y]) do
     assoc(x,y)
   end
-
-
-  # ---------SUBR==================
-  defp primitive([:car, arg], env) do
-    {s, _} = eval(arg, env)
-
-    if !is_list(s) do
-      Elxlisp.error("car not list", s)
-    end
-
-    [s1 | _] = s
-    s1
+  def pairlis([],_,env) do env end
+  def pairlis([x|xs],[y|ys],env) do
+    [[x|y]|pairlis(xs,ys,env)]
   end
 
-  defp primitive([:car | arg], _) do
+  # ---------SUBR==================
+  defp primitive([:car, arg]) do
+    if !is_list(arg) do
+      Elxlisp.error("car not list", arg)
+    end
+
+    [s | _] = arg
+    s
+  end
+
+  defp primitive([:car | arg]) do
     Elxlisp.error("car argument error", arg)
   end
 
-  defp primitive([:caar, arg], env) do
-    {s, _} = eval(arg, env)
-
-    if !is_list(s) or !is_list(hd(s)) do
-      Elxlisp.error("caar not list", s)
+  defp primitive([:caar, arg]) do
+    if !is_list(arg) or !is_list(hd(arg)) do
+      Elxlisp.error("caar not list", arg)
     end
 
-    [[s1 | _] | _] = s
-    s1
+    [[s | _] | _] = arg
+    s
   end
 
-  defp primitive([:caar | arg], _) do
+  defp primitive([:caar | arg]) do
     Elxlisp.error("caar argument error", arg)
   end
 
-  defp primitive([:cdr, arg], env) do
-    {s, _} = eval(arg, env)
-
-    if !is_list(s) do
-      Elxlisp.error("cdr not list", s)
+  defp primitive([:cdr, arg]) do
+    if !is_list(arg) do
+      Elxlisp.error("cdr not list", arg)
     end
 
-    [_ | s1] = s
-    s1
+    [_ | s] = arg
+    s
   end
 
-  defp primitive([:cdr | arg], _) do
+  defp primitive([:cdr | arg]) do
     Elxlisp.error("cdr argument error", arg)
   end
 
-  defp primitive([:cons, x, y], env) do
-    {s1, _} = eval(x, env)
-    {s2, _} = eval(y, env)
-    [s1 | s2]
+  defp primitive([:cons, x, y]) do
+    [x | y]
   end
 
-  defp primitive([:cons | arg], _) do
+  defp primitive([:cons | arg]) do
     Elxlisp.error("cons argument error", arg)
   end
 
-  defp primitive([:plus | args], env) do
-    args1 = args |> evlis(env)
-
-    if Enum.any?(args1, fn x -> !is_number(x) end) do
-      Elxlisp.error("plus not number", args1)
+  defp primitive([:plus | args]) do
+    if Enum.any?(args, fn x -> !is_number(x) end) do
+      Elxlisp.error("plus not number", args)
     end
 
-    args1 |> plus()
+    args |> plus()
   end
 
-  defp primitive([:difference, x, y], env) do
-    {x1, _} = eval(x, env)
-    {y1, _} = eval(y, env)
-
-    if !is_number(x1) do
-      Elxlisp.error("difference not number", x1)
+  defp primitive([:difference, x, y]) do
+    if !is_number(x) do
+      Elxlisp.error("difference not number", x)
     end
 
-    if !is_number(y1) do
-      Elxlisp.error("difference not number", y1)
+    if !is_number(y) do
+      Elxlisp.error("difference not number", y)
     end
 
-    x1 - y1
+    x - y
   end
 
-  defp primitive([:difference | arg], _) do
+  defp primitive([:difference | arg]) do
     Elxlisp.error("difference argument error", arg)
   end
 
-  defp primitive([:times | args], env) do
-    args1 = args |> evlis(env)
-
-    if Enum.any?(args1, fn x -> !is_number(x) end) do
-      Elxlisp.error("times not number", args1)
+  defp primitive([:times | args]) do
+    if Enum.any?(args, fn x -> !is_number(x) end) do
+      Elxlisp.error("times not number", args)
     end
 
-    args1 |> times()
+    args |> times()
   end
 
-  defp primitive([:quotient, x, y], env) do
-    {x1, _} = eval(x, env)
-    {y1, _} = eval(y, env)
-
-    if !is_number(x1) do
-      Elxlisp.error("quotient not number", x1)
+  defp primitive([:quotient, x, y]) do
+    if !is_number(x) do
+      Elxlisp.error("quotient not number", x)
     end
 
-    if !is_number(y1) do
-      Elxlisp.error("quotient not number", y1)
+    if !is_number(y) do
+      Elxlisp.error("quotient not number", y)
     end
 
-    div(x1, y1)
+    div(x, y)
   end
 
-  defp primitive([:quotient | arg], _) do
+  defp primitive([:quotient | arg]) do
     Elxlisp.error("quotient argument error", arg)
   end
 
-  defp primitive([:recip, x], env) do
-    {x1, _} = eval(x, env)
-
-    if !is_number(x1) do
-      Elxlisp.error("difference not number", x1)
+  defp primitive([:recip, x]) do
+    if !is_number(x) do
+      Elxlisp.error("difference not number", x)
     end
 
-    1 / x1
+    1 / x
   end
 
-  defp primitive([:recip | arg], _) do
+  defp primitive([:recip | arg]) do
     Elxlisp.error("recip argument error", arg)
   end
 
-  defp primitive([:remainder, x, y], env) do
-    {x1, _} = eval(x, env)
-    {y1, _} = eval(y, env)
-
-    if !is_number(x1) do
-      Elxlisp.error("remainder not number", x1)
+  defp primitive([:remainder, x, y]) do
+    if !is_number(x) do
+      Elxlisp.error("remainder not number", x)
     end
 
-    if !is_number(y1) do
-      Elxlisp.error("remainder not number", y1)
+    if !is_number(y) do
+      Elxlisp.error("remainder not number", y)
     end
 
-    rem(x1, y1)
+    rem(x, y)
   end
 
-  defp primitive([:remainder | arg], _) do
+  defp primitive([:remainder | arg]) do
     Elxlisp.error("remainder argument error", arg)
   end
 
-  defp primitive([:divide, x, y], env) do
-    {x1, _} = eval(x, env)
-    {y1, _} = eval(y, env)
-
-    if !is_number(x1) do
-      Elxlisp.error("divide not number", x1)
+  defp primitive([:divide, x, y]) do
+    if !is_number(x) do
+      Elxlisp.error("divide not number", x)
     end
 
-    if !is_number(y1) do
-      Elxlisp.error("divide not number", y1)
+    if !is_number(y) do
+      Elxlisp.error("divide not number", y)
     end
 
-    [div(x1, y1), rem(x1, y1)]
+    [div(x, y), rem(x, y)]
   end
 
-  defp primitive([:divide | arg], _) do
+  defp primitive([:divide | arg]) do
     Elxlisp.error("divide argument error", arg)
   end
 
-  defp primitive([:expt, x, y], env) do
-    {x1, _} = eval(x, env)
-    {y1, _} = eval(y, env)
-
-    if !is_number(x1) do
-      Elxlisp.error("expt not number", x1)
+  defp primitive([:expt, x, y]) do
+    if !is_number(x) do
+      Elxlisp.error("expt not number", x)
     end
 
-    if !is_number(y1) do
-      Elxlisp.error("expt not number", y1)
+    if !is_number(y) do
+      Elxlisp.error("expt not number", y)
     end
 
-    :math.pow(x1, y1)
+    :math.pow(x, y)
   end
 
-  defp primitive([:expt | arg], _) do
+  defp primitive([:expt | arg]) do
     Elxlisp.error("expt argument error", arg)
   end
 
-  defp primitive([:add1, x], env) do
-    {x1, _} = eval(x, env)
-
-    if !is_number(x1) do
-      Elxlisp.error("add1 not number", x1)
+  defp primitive([:add1, x]) do
+    if !is_number(x) do
+      Elxlisp.error("add1 not number", x)
     end
 
-    x1 + 1
+    x + 1
   end
 
-  defp primitive([:add1 | arg], _) do
+  defp primitive([:add1 | arg]) do
     Elxlisp.error("add1 argument error", arg)
   end
 
-  defp primitive([:sub1, x], env) do
-    {x1, _} = eval(x, env)
-
-    if !is_number(x1) do
-      Elxlisp.error("sub1 not number", x1)
+  defp primitive([:sub1, x]) do
+    if !is_number(x) do
+      Elxlisp.error("sub1 not number", x)
     end
 
-    x1 - 1
+    x - 1
   end
 
-  defp primitive([:sub1 | arg], _) do
+  defp primitive([:sub1 | arg]) do
     Elxlisp.error("sub1 argument error", arg)
   end
 
-  defp primitive([:null, arg], env) do
-    {s, _} = eval(arg, env)
-
-    if s == nil or s == [] do
+  defp primitive([:null, arg]) do
+    if arg == nil or arg == [] do
       :t
     else
       nil
     end
   end
 
-  defp primitive([:null | arg], _) do
+  defp primitive([:null | arg]) do
     Elxlisp.error("null argument error", arg)
   end
 
-  defp primitive([:length, arg], env) do
-    {s, _} = eval(arg, env)
-
-    if !is_list(s) do
-      Elxlisp.error("list not list", s)
+  defp primitive([:length, arg]) do
+    if !is_list(arg) do
+      Elxlisp.error("list not list", arg)
     end
 
-    length(s)
+    length(arg)
   end
 
-  defp primitive([:length | arg], _) do
+  defp primitive([:length | arg]) do
     Elxlisp.error("length argument error", arg)
   end
 
-  defp primitive([:operate, op, x, y], env) do
-    {x1, _} = eval(x, env)
-    {y1, _} = eval(y, env)
-
-    if !is_number(x1) do
-      Elxlisp.error("operate not number", x1)
+  defp primitive([:operate, op, x, y]) do
+    if !is_number(x) do
+      Elxlisp.error("operate not number", x)
     end
 
-    if !is_number(y1) do
-      Elxlisp.error("operate not number", y1)
+    if !is_number(y) do
+      Elxlisp.error("operate not number", y)
     end
 
     cond do
-      op == :+ -> x1 + y1
-      op == :- -> x1 - y1
-      op == :x -> x1 * y1
-      op == :/ -> x1 / y1
+      op == :+ -> x + y
+      op == :- -> x - y
+      op == :x -> x * y
+      op == :/ -> x / y
     end
   end
 
-  defp primitive([:operate | arg], _) do
+  defp primitive([:operate | arg]) do
     Elxlisp.error("operate argument error", arg)
   end
 
-  defp primitive([:atom, arg], env) do
-    {s, _} = eval(arg, env)
-
-    if is_atom(s) || is_number(s) do
+  defp primitive([:atom, arg]) do
+    if is_atom(arg) || is_number(arg) do
       :t
     else
       nil
     end
   end
 
-  defp primitive([:eq, x, y], env) do
-    {x1, _} = eval(x, env)
-    {y1, _} = eval(y, env)
-
-    if x1 == y1 do
+  defp primitive([:eq, x, y]) do
+    if x == y do
       :t
     else
       nil
     end
   end
 
-  defp primitive([:eq | arg], _) do
+  defp primitive([:eq | arg]) do
     Elxlisp.error("eq argument error", arg)
   end
 
-  defp primitive([:equal, x, y], env) do
-    {x1, _} = eval(x, env)
-    {y1, _} = eval(y, env)
-
-    if x1 == y1 do
+  defp primitive([:equal, x, y]) do
+    if x == y do
       :t
     else
       nil
     end
   end
 
-  defp primitive([:equql | arg], _) do
+  defp primitive([:equql | arg]) do
     Elxlisp.error("equal argument error", arg)
   end
 
-  defp primitive([:greaterp, x, y], env) do
-    {x1, _} = eval(x, env)
-    {y1, _} = eval(y, env)
-
-    if !is_number(x1) do
-      Elxlisp.error("greaterp not number", x1)
+  defp primitive([:greaterp, x, y]) do
+    if !is_number(x) do
+      Elxlisp.error("greaterp not number", x)
     end
 
-    if !is_number(y1) do
-      Elxlisp.error("greaterp not number", y1)
+    if !is_number(y) do
+      Elxlisp.error("greaterp not number", y)
     end
 
-    if x1 > y1 do
+    if x > y do
       :t
     else
       nil
     end
   end
 
-  defp primitive([:greaterp | arg], _) do
+  defp primitive([:greaterp | arg]) do
     Elxlisp.error("greaterp argument error", arg)
   end
 
-  defp primitive([:lessp, x, y], env) do
-    {x1, _} = eval(x, env)
-    {y1, _} = eval(y, env)
-
-    if !is_number(x1) do
-      Elxlisp.error("lessp not number", x1)
+  defp primitive([:lessp, x, y]) do
+    if !is_number(x) do
+      Elxlisp.error("lessp not number", x)
     end
 
-    if !is_number(y1) do
-      Elxlisp.error("lessp not number", y1)
+    if !is_number(y) do
+      Elxlisp.error("lessp not number", y)
     end
 
-    if x1 < y1 do
+    if x < y do
       :t
     else
       nil
     end
   end
 
-  defp primitive([:lessp | arg], _) do
+  defp primitive([:lessp | arg]) do
     Elxlisp.error("lessp argument error", arg)
   end
 
-  defp primitive([:max | arg], env) do
-    arg1 = evlis(arg, env)
-
-    if !Enum.all?(arg1, fn x -> is_number(x) end) do
-      Elxlisp.error("max not number", arg1)
+  defp primitive([:max | arg]) do
+    if !Enum.all?(arg, fn x -> is_number(x) end) do
+      Elxlisp.error("max not number", arg)
     end
 
-    Enum.max(arg1)
+    Enum.max(arg)
   end
 
-  defp primitive([:min | arg], env) do
-    arg1 = evlis(arg, env)
-
-    if !Enum.all?(arg1, fn x -> is_number(x) end) do
-      Elxlisp.error("min not number", arg1)
+  defp primitive([:min | arg]) do
+    if !Enum.all?(arg, fn x -> is_number(x) end) do
+      Elxlisp.error("min not number", arg)
     end
 
-    Enum.min(arg1)
+    Enum.min(arg)
   end
 
-  defp primitive([:logor | arg], env) do
-    arg1 = arg |> evlis(env)
-
-    if !Enum.all?(arg1, fn x -> is_integer(x) end) do
-      Elxlisp.error("logor not number", arg1)
+  defp primitive([:logor | arg]) do
+    if !Enum.all?(arg, fn x -> is_integer(x) end) do
+      Elxlisp.error("logor not number", arg)
     end
 
-    arg1 |> logor
+    arg |> logor
   end
 
-  defp primitive([:logand | arg], env) do
-    arg1 = arg |> evlis(env)
-
-    if !Enum.all?(arg1, fn x -> is_integer(x) end) do
-      Elxlisp.error("logand not number", arg1)
+  defp primitive([:logand | arg]) do
+    if !Enum.all?(arg, fn x -> is_integer(x) end) do
+      Elxlisp.error("logand not number", arg)
     end
 
-    arg1 |> logand
+    arg |> logand
   end
 
-  defp primitive([:logxor | arg], env) do
-    arg1 = arg |> evlis(env)
-
-    if !Enum.all?(arg1, fn x -> is_integer(x) end) do
-      Elxlisp.error("logxor not number", arg1)
+  defp primitive([:logxor | arg]) do
+    if !Enum.all?(arg, fn x -> is_integer(x) end) do
+      Elxlisp.error("logxor not number", arg)
     end
 
-    arg1 |> logxor
+    arg |> logxor
   end
 
-  defp primitive([:leftshift, x, n], env) do
-    {x1, _} = eval(x, env)
-    {n1, _} = eval(n, env)
-
-    if !is_integer(x1) do
-      Elxlisp.error("lessp not number", x1)
+  defp primitive([:leftshift, x, n]) do
+    if !is_integer(x) do
+      Elxlisp.error("lessp not number", x)
     end
 
-    if !is_integer(n1) do
-      Elxlisp.error("lessp not number", n1)
+    if !is_integer(n) do
+      Elxlisp.error("lessp not number", n)
     end
 
-    leftshift(x1, n1)
+    leftshift(x, n)
   end
 
-  defp primitive([:leftshift | arg], _) do
+  defp primitive([:leftshift | arg]) do
     Elxlisp.error("leftshift argument error", arg)
   end
 
-  defp primitive([:numberp, arg], env) do
-    {s, _} = eval(arg, env)
-
-    if is_number(s) do
+  defp primitive([:numberp, arg]) do
+    if is_number(arg) do
       :t
     else
       nil
     end
   end
 
-  defp primitive([:numberp | arg], _) do
+  defp primitive([:numberp | arg]) do
     Elxlisp.error("numberp argument error", arg)
   end
 
-  defp primitive([:floatp, arg], env) do
-    {s, _} = eval(arg, env)
-
-    if is_float(s) do
+  defp primitive([:floatp, arg]) do
+    if is_float(arg) do
       :t
     else
       nil
     end
   end
 
-  defp primitive([:floatp | arg], _) do
+  defp primitive([:floatp | arg]) do
     Elxlisp.error("floatp argument error", arg)
   end
 
-  defp primitive([:zerop, arg], env) do
-    {s, _} = eval(arg, env)
-
-    if s == 0 do
+  defp primitive([:zerop, arg]) do
+    if arg == 0 do
       :t
     else
       nil
     end
   end
 
-  defp primitive([:zerop | arg], _) do
+  defp primitive([:zerop | arg]) do
     Elxlisp.error("zerop argument error", arg)
   end
 
-  defp primitive([:minusp, arg], env) do
-    {s, _} = eval(arg, env)
-
-    if s < 0 do
+  defp primitive([:minusp, arg]) do
+    if arg < 0 do
       :t
     else
       nil
     end
   end
 
-  defp primitive([:minusp | arg], _) do
+  defp primitive([:minusp | arg]) do
     Elxlisp.error("zerop argument error", arg)
   end
 
-  defp primitive([:onep, arg], env) do
-    {s, _} = eval(arg, env)
-
-    if s == 1 do
+  defp primitive([:onep, arg]) do
+    if arg == 1 do
       :t
     else
       nil
     end
   end
 
-  defp primitive([:onep | arg], _) do
+  defp primitive([:onep | arg]) do
     Elxlisp.error("onep argument error", arg)
   end
 
-  defp primitive([:listp, arg], env) do
-    {s, _} = eval(arg, env)
-
-    if is_list(s) do
+  defp primitive([:listp, arg]) do
+    if is_list(arg) do
       :t
     else
       nil
     end
   end
 
-  defp primitive([:listp | arg], _) do
+  defp primitive([:listp | arg]) do
     Elxlisp.error("listp argument error", arg)
   end
 
-  defp primitive([:symbolp, arg], env) do
-    {s, _} = eval(arg, env)
-
-    if is_atom(s) do
+  defp primitive([:symbolp, arg]) do
+    if is_atom(arg) do
       :t
     else
       nil
     end
   end
 
-  defp primitive([:symbolp | arg], _) do
+  defp primitive([:symbolp | arg]) do
     Elxlisp.error("symbolp argument error", arg)
   end
 
-  defp primitive([:read], _) do
+  defp primitive([:read]) do
     {s, _} = Read.read([], :stdin)
     s
   end
 
-  defp primitive([:eval, x, nil], _) do
+  defp primitive([:eval, x, nil]) do
     {s, _} = eval(x, nil)
     s
   end
 
-  defp primitive([:eval, x, [:quote, y]], _) do
+  defp primitive([:eval, x, [:quote, y]]) do
     {s, _} = eval(x, y)
     s
   end
 
-  defp primitive([:eval | arg], _) do
+  defp primitive([:eval | arg]) do
     Elxlisp.error("eval argument error", arg)
   end
 
-  defp primitive([:apply, f, a, e], env) do
-    {a1, _} = eval(a, env)
-    funcall(f, a1, env ++ e)
+  defp primitive([:apply, f, a, e]) do
+    funcall(f, a, e)
   end
 
-  defp primitive([:apply | arg], _) do
+  defp primitive([:apply | arg]) do
     Elxlisp.error("apply argument error", arg)
   end
 
-  defp primitive([:print, x], env) do
-    {x1, _} = eval(x, env)
-    Print.print(x1)
+  defp primitive([:print, x]) do
+    Print.print(x)
   end
 
-  defp primitive([:print | arg], _) do
+  defp primitive([:print | arg]) do
     Elxlisp.error("print argument error", arg)
   end
 
-  defp primitive([:quit], _) do
+  defp primitive([:quit]) do
     throw("goodbye")
   end
 
-  defp primitive([:quit | arg], _) do
+  defp primitive([:quit | arg]) do
     Elxlisp.error("quit argument error", arg)
   end
 
-  defp primitive([:reverse, [:quote, x]], _) do
+  defp primitive([:reverse, x]) do
     Enum.reverse(x)
   end
 
-  defp primitive([:reverse | arg], _) do
+  defp primitive([:reverse | arg]) do
     Elxlisp.error("reverse argument error", arg)
   end
 
-  defp primitive([:and | args], env) do
-    args1 = evlis(args, env)
-
-    if Enum.all?(args1, fn x -> x != nil end) do
+  defp primitive([:and | args]) do
+    if Enum.all?(args, fn x -> x != nil end) do
       :t
     else
       nil
     end
   end
 
-  defp primitive([:or | args], env) do
-    args1 = evlis(args, env)
-
-    if Enum.any?(args1, fn x -> x != nil end) do
+  defp primitive([:or | args]) do
+    if Enum.any?(args, fn x -> x != nil end) do
       :t
     else
       nil
     end
   end
 
-  defp primitive([:not, x], env) do
-    {s, _} = eval(x, env)
-    s
+  defp primitive([:not, x]) do
+    if x == nil do
+      :t
+    else
+      nil
+    end
   end
 
-  defp primitive([:not | arg], _) do
+  defp primitive([:not | arg]) do
     Elxlisp.error("not argument error", arg)
   end
 
-  defp primitive([:member, x, y], env) do
-    {x1, _} = eval(x, env)
-    {y1, _} = eval(y, env)
-
-    if !is_list(y1) do
-      Elxlisp.error("member not list", y1)
+  defp primitive([:member, x, y]) do
+    if !is_list(y) do
+      Elxlisp.error("member not list", y)
     end
 
-    if Enum.member?(y1, x1) do
+    if Enum.member?(y, x) do
       :t
     else
       nil
     end
   end
 
-  defp primitive([:member | arg], _) do
+  defp primitive([:member | arg]) do
     Elxlisp.error("member argument error", arg)
   end
 
