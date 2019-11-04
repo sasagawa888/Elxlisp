@@ -91,13 +91,13 @@ defmodule Eval do
     {s, env1}
   end
 
-  def eval([:if, x, y, z], env, mode) do
-    {x1, _} = eval(x, env, mode)
+  def eval([:if, x, y, z], env, _) do
+    {x1, _} = eval(x, env, :seq)
 
     if x1 != nil do
-      eval(y, env, mode)
+      eval(y, env, :seq)
     else
-      eval(z, env, mode)
+      eval(z, env, :seq)
     end
   end
 
