@@ -118,6 +118,13 @@ defmodule Eval do
     {:t, env1}
   end
 
+  def eval([:time,x], env) do
+    {time, {result,_}} = :timer.tc(fn() -> eval(x,env) end)
+    IO.inspect "time: #{time} micro second"
+    IO.inspect "-------------"
+    {result,env}
+  end
+
   def eval(x, env) when is_list(x) do
     [f|args] = x
     {funcall(f, evlis(args,env), env), env}
@@ -867,4 +874,14 @@ defmodule Eval do
 
     Enum.member?(y, x)
   end
+
+  # user defined function
+  def is_function(x) do
+    if is_list(x) and !is_subr(Enum.at(x,0)) do
+      true
+    else
+      false
+    end
+  end
+
 end

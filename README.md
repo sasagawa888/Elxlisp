@@ -57,6 +57,7 @@ foo[x] = boo[x]
 - quote
 - lambda
 - function
+- time  print execute time (micro second)
 
 ## primitive
 - car
