@@ -16,8 +16,9 @@ defmodule Eval do
   use Bitwise
 
   @moduledoc """
-  Evaluate M expression
+  Evaluate S expression
   Return value is tuple. {val,env}
+  eval(exp,env,mode,fname)
   ## example
   iex>Eval.eval(:t,[],:para)
   {:t,[]}

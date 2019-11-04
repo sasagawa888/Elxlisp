@@ -5,8 +5,9 @@ Lisp 1.5 M-expression. Now,under construction.
 make clone from GitHub
 
 ## invoke
-mix elxlisp
-
+mix elxlisp  (sequential)
+mix elxlisp seq (sequential)
+mix elxlisp para (parallel)
 
 ## example
 ```elixir
