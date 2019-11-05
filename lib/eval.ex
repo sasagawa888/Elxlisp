@@ -93,18 +93,18 @@ defmodule Eval do
     {s, env1}
   end
 
-  def eval([:if, x, y, z], env, _) do
-    {x1, _} = eval(x, env, :seq)
+  def eval([:if, x, y, z], env, mode) do
+    {x1, _} = eval(x, env, mode)
 
     if x1 != nil do
-      eval(y, env, :seq)
+      eval(y, env, mode)
     else
-      eval(z, env, :seq)
+      eval(z, env, mode)
     end
   end
 
-  def eval([:cond, arg], env, _) do
-    evcond(arg, env)
+  def eval([:cond, arg], env, mode) do
+    evcond(arg, env, mode)
   end
 
   def eval([:prog, arg | body], env, _) do
@@ -185,17 +185,17 @@ defmodule Eval do
     end
   end
 
-  defp evcond([], _) do
+  defp evcond([], _, _) do
     nil
   end
 
-  defp evcond([[p, e] | rest], env) do
-    {s, _} = eval(p, env, :seq)
+  defp evcond([[p, e] | rest], env, mode) do
+    {s, _} = eval(p, env, mode)
 
     if s != nil do
-      eval(e, env, :seq)
+      eval(e, env, mode)
     else
-      evcond(rest, env)
+      evcond(rest, env, mode)
     end
   end
 
