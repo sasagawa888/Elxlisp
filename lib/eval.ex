@@ -132,6 +132,18 @@ defmodule Eval do
     {:t, env1}
   end
 
+  def eval([:load, x, :sexp], env, mode) do
+    {x1, _} = eval(x, env, mode)
+    {status, string} = File.read(x1)
+
+    if status == :error do
+      throw("Error load")
+    end
+
+    env1 = sload(env, Read.stokenize(string))
+    {:t, env1}
+  end
+
   def eval([:time, x], env, mode) do
     {time, {result, _}} = :timer.tc(fn -> eval(x, env, mode) end)
     IO.inspect("time: #{time} micro second")
@@ -869,6 +881,17 @@ defmodule Eval do
     {_, env1} = Eval.eval(s, env, :seq)
     load(env1, buf1)
   end
+
+  defp sload(env, []) do
+    env
+  end
+
+  defp sload(env, buf) do
+    {s, buf1} = Read.sread(buf, :filein)
+    {_, env1} = Eval.eval(s, env, :seq)
+    sload(env1, buf1)
+  end
+
 
   defp plus([]) do
     0

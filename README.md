@@ -84,7 +84,7 @@ foo[x] = boo[x]
 - greaterp
 - eqgreaterp
 - lessp
-- eqlessp 
+- eqlessp
 - max
 - min
 - logor
@@ -107,6 +107,8 @@ foo[x] = boo[x]
 - and
 - or
 - load
+mexp -> load["test.meta"]
+sexp -> (load "test.lsp" sexp)
 
 ## Acknowledgment
 
