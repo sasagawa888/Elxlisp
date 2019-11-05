@@ -46,7 +46,6 @@ Lisp 1.5 in Elixir
 - string
 - symbol
 - list
-- keyword-list (for environment)
 
 
 ## special form
@@ -83,7 +82,9 @@ foo[x] = boo[x]
 - eq
 - equal
 - greaterp
+- eqgreaterp
 - lessp
+- eqlessp 
 - max
 - min
 - logor

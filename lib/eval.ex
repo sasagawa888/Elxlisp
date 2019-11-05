@@ -143,16 +143,16 @@ defmodule Eval do
     [f | args] = x
 
     if mode == :para do
-      {funcall(f, paraevlis(args, env), env), env}
+      {funcall(f, paraevlis(args, env), env, mode), env}
     else
       if mode == :seq do
-        {funcall(f, evlis(args, env), env), env}
+        {funcall(f, evlis(args, env), env, mode), env}
       end
     end
   end
 
   # -----------apply--------------------------
-  defp funcall(f, args, env) when is_atom(f) do
+  defp funcall(f, args, env, mode) when is_atom(f) do
     if is_subr(f) do
       primitive([f | args])
     else
@@ -164,22 +164,22 @@ defmodule Eval do
 
       {:func, args1, body} = assoc(f, env)
       env1 = pairlis(args1, args, env)
-      {s, _} = eval(body, env1, :seq)
+      {s, _} = eval(body, env1, mode)
       s
     end
   end
 
-  defp funcall(f, args, env) when is_list(f) do
+  defp funcall(f, args, env, mode) when is_list(f) do
     if Enum.at(f, 0) == :lambda do
-      {{:func, args1, body}, _} = eval(f, env, :seq)
+      {{:func, args1, body}, _} = eval(f, env, mode)
       env1 = pairlis(args1, args, env)
-      {s, _} = eval(body, env1, :seq)
+      {s, _} = eval(body, env1, mode)
       s
     else
       if Enum.at(f, 0) == :function do
-        {{:funarg, args1, body, env2}, _} = eval(f, env, :seq)
+        {{:funarg, args1, body, env2}, _} = eval(f, env, mode)
         env1 = pairlis(args1, args, env)
-        {s, _} = eval(body, env1 ++ env2, :seq)
+        {s, _} = eval(body, env1 ++ env2, mode)
         s
       end
     end
@@ -564,6 +564,26 @@ defmodule Eval do
     Elxlisp.error("greaterp argument error", arg)
   end
 
+  defp primitive([:eqgreaterp, x, y]) do
+    if !is_number(x) do
+      Elxlisp.error("eqgreaterp not number", x)
+    end
+
+    if !is_number(y) do
+      Elxlisp.error("eqgreaterp not number", y)
+    end
+
+    if x >= y do
+      :t
+    else
+      nil
+    end
+  end
+
+  defp primitive([:eqgreaterp | arg]) do
+    Elxlisp.error("eqgreaterp argument error", arg)
+  end
+
   defp primitive([:lessp, x, y]) do
     if !is_number(x) do
       Elxlisp.error("lessp not number", x)
@@ -582,6 +602,26 @@ defmodule Eval do
 
   defp primitive([:lessp | arg]) do
     Elxlisp.error("lessp argument error", arg)
+  end
+
+  defp primitive([:eqlessp, x, y]) do
+    if !is_number(x) do
+      Elxlisp.error("eqlessp not number", x)
+    end
+
+    if !is_number(y) do
+      Elxlisp.error("eqlessp not number", y)
+    end
+
+    if x <= y do
+      :t
+    else
+      nil
+    end
+  end
+
+  defp primitive([:eqlessp | arg]) do
+    Elxlisp.error("eqlessp argument error", arg)
   end
 
   defp primitive([:max | arg]) do
@@ -744,7 +784,7 @@ defmodule Eval do
   end
 
   defp primitive([:apply, f, a, e]) do
-    funcall(f, a, e)
+    funcall(f, a, e, :seq)
   end
 
   defp primitive([:apply | arg]) do
@@ -912,7 +952,9 @@ defmodule Eval do
       :eq,
       :equal,
       :greaterp,
+      :eqgreaterp,
       :lessp,
+      :eqlessp,
       :max,
       :min,
       :logor,

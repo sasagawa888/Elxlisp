@@ -6,6 +6,9 @@ ack[m;n] = [eq[m;0]->add1[n];
             eq[n;0]->ack[sub1[m];1];
             T->ack[sub1[m];ack[m;sub1[n]]]]
 
+tarai[x;y;z] = [eqlessp[x;y]->y;
+                T->tarai[tarai[sub1[x];y;z];tarai[sub1[y];z;x];tarai[sub1[z];x;y]]]
+
 union[x;y] = [null[x]->y;
               member[car[x];y]->union[cdr[x];y];
               T->cons[car[x];union[cdr[x];y]]]
