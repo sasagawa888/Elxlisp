@@ -52,7 +52,7 @@ defmodule Read do
   end
 
   defp read_list([], ls, :stdin) do
-    buf = IO.gets("") |> stokenize
+    buf = IO.gets("") |> tokenize
     read_list(buf, ls, :stdin)
   end
 
@@ -104,7 +104,7 @@ defmodule Read do
 
   # read for S-exp
   def sread([], :stdin) do
-    buf = IO.gets("") |> tokenize
+    buf = IO.gets("") |> stokenize
     sread(buf, :stdin)
   end
 
@@ -113,8 +113,13 @@ defmodule Read do
   end
 
   def sread(["(" | xs], stream) do
-    {s, rest} = read_list(xs, [], stream)
+    {s, rest} = sread_list(xs, [], stream)
     {s, rest}
+  end
+
+  def sread(["'" | xs], stream) do
+    {s ,rest} = sread(xs, stream)
+    {[:quote,s], rest}
   end
 
   def sread([x | xs], _) do
@@ -127,6 +132,39 @@ defmodule Read do
       x == "F" -> {nil, xs}
       true -> {String.to_atom(x), xs}
     end
+  end
+
+  defp sread_list([], ls, :stdin) do
+    buf = IO.gets("") |> stokenize
+    sread_list(buf, ls, :stdin)
+  end
+
+  defp sread_list([], _, :filein) do
+    Elxlisp.error("illegal list form", nil)
+  end
+
+  defp sread_list([")" | xs], ls, _) do
+    {ls, xs}
+  end
+
+  defp sread_list(["(" | xs], ls, stream) do
+    {s, rest} = sread_list(xs, [], stream)
+    sread_list(rest, ls ++ [s], stream)
+  end
+
+  defp sread_list(["." | xs], ls, stream) do
+    {s, rest} = sread_list(xs, [], stream)
+
+    if length(s) == 1 do
+      {[hd(ls) | hd(s)], rest}
+    else
+      {ls ++ s, rest}
+    end
+  end
+
+  defp sread_list(x, ls, stream) do
+    {s, rest} = sread(x, stream)
+    sread_list(rest, ls ++ [s], stream)
   end
 
   @doc """
@@ -154,6 +192,7 @@ defmodule Read do
     str
     |> String.replace("(", " ( ")
     |> String.replace(")", " ) ")
+    |> String.replace("'"," ' ")
     |> String.replace("\n", " ")
     |> String.split()
   end
