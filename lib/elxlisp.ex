@@ -8,11 +8,19 @@ defmodule Elxlisp do
   REPL(read eval print loop)
   """
   def repl(arg) do
-    IO.puts("Lisp 1.5 in Elixir")
+    IO.write("Lisp 1.5 in Elixir ")
+    IO.puts(arg)
+
     cond do
-      Enum.member?(arg,:para) -> repl1([],[],:para)
-      Enum.member?(arg,:seq) -> repl1([],[],:seq)
-      true -> repl1([], [], :seq)
+      Enum.member?(arg, "para") and Enum.member?(arg, "mexp") -> repl1([], [], :para, :mexp)
+      Enum.member?(arg, "seq") and Enum.member?(arg, "mexp") -> repl1([], [], :seq, :mexp)
+      Enum.member?(arg, "para") and Enum.member?(arg, "sexp") -> repl1([], [], :para, :sexp)
+      Enum.member?(arg, "seq") and Enum.member?(arg, "sexp") -> repl1([], [], :seq, :sexp)
+      Enum.member?(arg, "para") -> repl1([], [], :para, :mexp)
+      Enum.member?(arg, "seq") -> repl1([], [], :seq, :mexp)
+      Enum.member?(arg, "sexp") -> repl1([], [], :seq, :sexp)
+      Enum.member?(arg, "mexp") -> repl1([], [], :seq, :mexp)
+      true -> repl1([], [], :seq, :mexp)
     end
   end
 
@@ -21,19 +29,28 @@ defmodule Elxlisp do
   # The environment is association list. e.g. [[:a,1],[;b,2]]
   # the buffer is list. Each elements are string
 
-  defp repl1(env, buf, mode) do
+  defp repl1(env, buf, mode, exp) do
     try do
-      IO.write("? ")
-      {s, buf1} = Read.read(buf, :stdin)
-      {s1, env1} = Eval.eval(s, env, mode)
-      Print.print(s1)
-      repl1(env1, buf1 ,mode)
+      if exp == :mexp do
+        IO.write("? ")
+        {s, buf1} = Read.read(buf, :stdin)
+        {s1, env1} = Eval.eval(s, env, mode)
+        Print.print(s1)
+        repl1(env1, buf1, mode, exp)
+      else if exp == :sexp do
+        IO.write("S? ")
+        {s, buf1} = Read.sread(buf, :stdin)
+        {s1, env1} = Eval.eval(s, env, mode)
+        Print.print(s1)
+        repl1(env1, buf1, mode, exp)
+      end
+      end
     catch
       x ->
         IO.inspect(x)
 
         if x != "goodbye" do
-          repl1(env, buf, mode)
+          repl1(env, buf, mode, exp)
         else
           true
         end

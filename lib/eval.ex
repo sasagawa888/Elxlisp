@@ -216,7 +216,7 @@ defmodule Eval do
     [nil | make_nil(xs)]
   end
 
-  #sequential evlis
+  # sequential evlis
   defp evlis([], _) do
     []
   end

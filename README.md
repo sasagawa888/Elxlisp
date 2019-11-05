@@ -1,14 +1,16 @@
 # Elxlisp
 Lisp 1.5 M-expression. Now,under construction.
+Also S-expression is avalable with invoke option.
 
 ## Installation
 make clone from GitHub
 
 ## invoke
-mix elxlisp  (sequential)
-mix elxlisp seq (sequential)
-mix elxlisp para (parallel)
-
+mix elxlisp  (sequential and m-expression)
+mix elxlisp seq (sequential and m-expression)
+mix elxlisp para (parallel and m-expression)
+mix elxlisp sexp (sequential and s-expression)
+mix elxlisp mexp (sequential and m-expression)
 ## example
 ```elixir
 mix elxlisp

@@ -52,7 +52,7 @@ defmodule Read do
   end
 
   defp read_list([], ls, :stdin) do
-    buf = IO.gets("") |> tokenize
+    buf = IO.gets("") |> stokenize
     read_list(buf, ls, :stdin)
   end
 
@@ -102,6 +102,33 @@ defmodule Read do
     read_bracket(rest, ls ++ [s], stream)
   end
 
+  # read for S-exp
+  def sread([], :stdin) do
+    buf = IO.gets("") |> tokenize
+    sread(buf, :stdin)
+  end
+
+  def sread([], :filein) do
+    []
+  end
+
+  def sread(["(" | xs], stream) do
+    {s, rest} = read_list(xs, [], stream)
+    {s, rest}
+  end
+
+  def sread([x | xs], _) do
+    cond do
+      is_integer_str(x) -> {String.to_integer(x), xs}
+      is_float_str(x) -> {String.to_float(x), xs}
+      is_string_str(x) -> {string_str_to_string(x), xs}
+      x == "nil" -> {[], xs}
+      x == "NIL" -> {[], xs}
+      x == "F" -> {nil, xs}
+      true -> {String.to_atom(x), xs}
+    end
+  end
+
   @doc """
   ## example
   iex>Read.tokenize("(+ 1 2)")
@@ -119,6 +146,15 @@ defmodule Read do
     |> String.replace("\n", " ")
     |> String.replace("{", " { ")
     |> String.replace("}", " } ")
+    |> String.split()
+  end
+
+  # tokenizer for S-exp
+  def stokenize(str) do
+    str
+    |> String.replace("(", " ( ")
+    |> String.replace(")", " ) ")
+    |> String.replace("\n", " ")
     |> String.split()
   end
 
