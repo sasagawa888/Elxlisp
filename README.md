@@ -64,7 +64,6 @@ foo[x] = boo[x]
 
 ## primitive
 - car
-- caar
 - cdr
 - cons
 - plus
