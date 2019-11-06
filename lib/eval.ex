@@ -313,19 +313,6 @@ defmodule Eval do
     Elxlisp.error("car argument error", arg)
   end
 
-  defp primitive([:caar, arg]) do
-    if !is_list(arg) or !is_list(hd(arg)) do
-      Elxlisp.error("caar not list", arg)
-    end
-
-    [[s | _] | _] = arg
-    s
-  end
-
-  defp primitive([:caar | arg]) do
-    Elxlisp.error("caar argument error", arg)
-  end
-
   defp primitive([:cdr, arg]) do
     if !is_list(arg) do
       Elxlisp.error("cdr not list", arg)
@@ -956,7 +943,6 @@ defmodule Eval do
   defp is_subr(x) do
     y = [
       :car,
-      :caar,
       :cdr,
       :cons,
       :plus,
