@@ -9,6 +9,9 @@ ack[m;n] = [eq[m;0]->add1[n];
 tarai[x;y;z] = [eqlessp[x;y]->y;
                 T->tarai[tarai[sub1[x];y;z];tarai[sub1[y];z;x];tarai[sub1[z];x;y]]]
 
+fib[n] = [lessp[n;2]->n;
+          T->plus[fib[sub1[n]];fib[difference[n;2]]]]
+
 union[x;y] = [null[x]->y;
               member[car[x];y]->union[cdr[x];y];
               T->cons[car[x];union[cdr[x];y]]]
