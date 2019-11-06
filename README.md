@@ -6,11 +6,11 @@ Also S-expression is avalable with invoke option.
 make clone from GitHub
 
 ## invoke
-mix elxlisp  (sequential and m-expression)
-mix elxlisp seq (sequential and m-expression)
-mix elxlisp para (parallel and m-expression)
-mix elxlisp sexp (sequential and s-expression)
-mix elxlisp mexp (sequential and m-expression)
+- mix elxlisp  (sequential and m-expression)
+- mix elxlisp seq (sequential and m-expression)
+- mix elxlisp para (parallel and m-expression)
+- mix elxlisp sexp (sequential and s-expression)
+- mix elxlisp mexp (sequential and m-expression)
 ## example
 ```elixir
 mix elxlisp
@@ -33,9 +33,10 @@ t
 goodbye
 ```
 
+## environment is association list
 ```elixir
 Lisp 1.5 in Elixir
-? eval[cons[x;y];({x 1}{y 2})]
+? eval[(cons x y);((x . 1)(y . 2))]
 (1 . 2)
 ?
 ```

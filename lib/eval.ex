@@ -786,7 +786,7 @@ defmodule Eval do
     s
   end
 
-  defp primitive([:eval, x, [:quote, y]]) do
+  defp primitive([:eval, x, y]) do
     {s, _} = eval(x, y, :seq)
     s
   end
