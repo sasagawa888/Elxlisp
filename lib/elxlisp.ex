@@ -68,7 +68,7 @@ defmodule Elxlisp do
     cond do
       l == "mexp" -> IO.write("M-expression ")
       l == "sexp" -> IO.write("S-expression ")
-      l == "para" -> IO.write("in paralllel ")
+      l == "para" -> IO.write("in parallel ")
       l == "seq"  -> IO.write("in sequential ")
     end
     message1(ls)
