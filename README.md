@@ -1,16 +1,16 @@
 # Elxlisp
 Lisp 1.5 M-expression. Now,under construction.
-Also S-expression is avalable with invoke option.
+Also S-expression is available with invoke option.
 
 ## Installation
 make clone from GitHub
 
 ## invoke
-- mix elxlisp  (sequential and m-expression)
-- mix elxlisp seq (sequential and m-expression)
-- mix elxlisp para (parallel and m-expression)
-- mix elxlisp sexp (sequential and s-expression)
-- mix elxlisp mexp (sequential and m-expression)
+- mix elxlisp  (sequential and M-expression)
+- mix elxlisp seq (sequential and M-expression)
+- mix elxlisp para (parallel and M-expression)
+- mix elxlisp sexp (sequential and S-expression)
+- mix elxlisp mexp (sequential and M-expression)
 ## example
 ```elixir
 mix elxlisp
@@ -53,7 +53,7 @@ Lisp 1.5 in Elixir
 - cond      
 [p1->e1;p2->e2...]
 - if
-- define    
+- defun    
 foo[x] = boo[x]
 - set       
 - setq
@@ -107,8 +107,8 @@ foo[x] = boo[x]
 - and
 - or
 - load
-mexp -> load["test.meta"]
-sexp -> (load "test.lsp" sexp)
+-- mexp -> load["test.meta"]
+-- sexp -> (load "test.lsp" sexp)
 
 ## Acknowledgment
 
