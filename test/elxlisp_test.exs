@@ -30,7 +30,6 @@ defmodule ElxlispTest do
 
   test "function" do
     assert Elxlisp.foo("car[(A B)]\n") == :A
-    assert Elxlisp.foo("caar[((A B) C)]\n") == :A
     assert Elxlisp.foo("cdr[(A B)]\n") == [:B]
     assert Elxlisp.foo("cons[A;B]\n") == [:A | :B]
     assert Elxlisp.foo("add1[1]\n") == 2
@@ -79,5 +78,12 @@ defmodule ElxlispTest do
     assert Elxlisp.foo("greaterp[1.2;1]\n") == :t
     assert Elxlisp.foo("lessp[1;1]\n") == nil
     assert Elxlisp.foo("lessp[0;1]\n") == :t
+    assert Elxlisp.foo("eval[(cons x y);((x . 1)(y . 2))]\n") == [1|2]
   end
+
+  test "S-expression" do
+    assert Elxlisp.bar("(plus 1 2)\n") == 3
+    assert Elxlisp.bar("(length '(1 2))\n") == 2
+  end
+
 end

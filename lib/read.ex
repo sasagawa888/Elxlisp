@@ -30,7 +30,7 @@ defmodule Read do
       {[String.to_atom(x) | s], rest}
     else
       {s1, rest1} = read(Enum.drop(rest, 1), stream)
-      {[:define, [String.to_atom(x) | s], s1], rest1}
+      {[:defun, String.to_atom(x) ,s , s1], rest1}
     end
   end
 
@@ -95,6 +95,10 @@ defmodule Read do
 
   defp read_bracket(["]" | xs], ls, _) do
     {ls, xs}
+  end
+
+  defp read_bracket(["," | _], _, _) do
+    Elxlisp.error("illegal bracket form , change to ;", nil)
   end
 
   defp read_bracket(x, ls, stream) do
@@ -182,8 +186,7 @@ defmodule Read do
     |> String.replace("->", " ")
     |> String.replace("=", " = ")
     |> String.replace("\n", " ")
-    |> String.replace("{", " { ")
-    |> String.replace("}", " } ")
+    |> String.replace(",", " , ")
     |> String.split()
   end
 

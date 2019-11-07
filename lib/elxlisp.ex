@@ -9,7 +9,7 @@ defmodule Elxlisp do
   """
   def repl(arg) do
     IO.write("Lisp 1.5 in Elixir ")
-    IO.puts(arg)
+    message(arg)
 
     cond do
       Enum.member?(arg, "para") and Enum.member?(arg, "mexp") -> repl1([], [], :para, :mexp)
@@ -57,15 +57,39 @@ defmodule Elxlisp do
     end
   end
 
+  def message([]) do
+    IO.puts("M-expression in sequential")
+  end
+  def message(l) do
+    message1(l)
+  end
+  def message1([]) do IO.puts("") end
+  def message1([l|ls]) do
+    cond do
+      l == "mexp" -> IO.write("M-expression ")
+      l == "sexp" -> IO.write("S-expression ")
+      l == "para" -> IO.write("in paralllel ")
+      l == "seq"  -> IO.write("in sequential ")
+    end
+    message1(ls)
+  end
+
   def error(msg, dt) do
     IO.write("Error ")
     IO.write(msg)
     IO.write(" ")
     throw(dt)
   end
-
+  # for test M-expression
   def foo(x) do
     {s, _} = x |> Read.tokenize() |> Read.read(:stdin)
+    {s1, _} = Eval.eval(s, [], :seq)
+    s1
+  end
+
+  # for test S-expression
+  def bar(x) do
+    {s, _} = x |> Read.stokenize() |> Read.sread(:stdin)
     {s1, _} = Eval.eval(s, [], :seq)
     s1
   end

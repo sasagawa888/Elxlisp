@@ -80,6 +80,11 @@ defmodule Eval do
     {name, env1}
   end
 
+  def eval([:defun, name, arg, body], env, _) do
+    env1 = [[name | {:func, arg, body}] | env]
+    {name, env1}
+  end
+
   def eval([:set, name, arg], env, mode) do
     {name1, _} = eval(name, env, mode)
     {s, _} = eval(arg, env, mode)
@@ -858,6 +863,15 @@ defmodule Eval do
     Elxlisp.error("member argument error", arg)
   end
 
+  defp primitive([:compile, x]) do
+    compile(x)
+  end
+
+  defp primitive([:compile | arg]) do
+    Elxlisp.error("compile argument error", arg)
+  end
+
+
   # ----------subr---------------
   defp load(env, []) do
     env
@@ -879,6 +893,25 @@ defmodule Eval do
     sload(env1, buf1)
   end
 
+  defp compile(buf) do
+    {s, buf1} = Read.read(buf, :filein)
+    to_elixir(s)
+    compile(buf1)
+  end
+
+  defp to_elixir([]) do nil end
+  defp to_elixir([:defun,name,arg,body]) do
+    IO.write("def ")
+    IO.write(name)
+    IO.write(arg)
+    to_elixir(body)
+  end
+  defp to_elixir([:plus]) do nil end
+  defp to_elixir([:plus,x|xs]) do
+    IO.write(x)
+    IO.write("+")
+    to_elixir([:plus,xs])
+  end
 
   defp plus([]) do
     0
