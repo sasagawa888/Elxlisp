@@ -1,3 +1,3 @@
 
-(define (foo x)
+(defun foo (x)
   (plus x x))
