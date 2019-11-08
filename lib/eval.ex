@@ -53,8 +53,12 @@ defmodule Eval do
     if is_upper_atom(x) do
       {x, env}
     else
-      s = assoc(x, env)
-      {s, env}
+      if Enum.member?([:+, :-, :*, :/], x) do
+        {x, env}
+      else
+        s = assoc(x, env)
+        {s, env}
+      end
     end
   end
 
@@ -507,7 +511,7 @@ defmodule Eval do
     cond do
       op == :+ -> x + y
       op == :- -> x - y
-      op == :x -> x * y
+      op == :* -> x * y
       op == :/ -> x / y
     end
   end
@@ -871,7 +875,6 @@ defmodule Eval do
     Elxlisp.error("compile argument error", arg)
   end
 
-
   # ----------subr---------------
   defp load(env, []) do
     env
@@ -899,18 +902,25 @@ defmodule Eval do
     compile(buf1)
   end
 
-  defp to_elixir([]) do nil end
-  defp to_elixir([:defun,name,arg,body]) do
+  defp to_elixir([]) do
+    nil
+  end
+
+  defp to_elixir([:defun, name, arg, body]) do
     IO.write("def ")
     IO.write(name)
     IO.write(arg)
     to_elixir(body)
   end
-  defp to_elixir([:plus]) do nil end
-  defp to_elixir([:plus,x|xs]) do
+
+  defp to_elixir([:plus]) do
+    nil
+  end
+
+  defp to_elixir([:plus, x | xs]) do
     IO.write(x)
     IO.write("+")
-    to_elixir([:plus,xs])
+    to_elixir([:plus, xs])
   end
 
   defp plus([]) do

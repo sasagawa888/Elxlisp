@@ -30,7 +30,7 @@ defmodule Read do
       {[String.to_atom(x) | s], rest}
     else
       {s1, rest1} = read(Enum.drop(rest, 1), stream)
-      {[:defun, String.to_atom(x) ,s , s1], rest1}
+      {[:defun, String.to_atom(x), s, s1], rest1}
     end
   end
 
@@ -122,8 +122,8 @@ defmodule Read do
   end
 
   def sread(["'" | xs], stream) do
-    {s ,rest} = sread(xs, stream)
-    {[:quote,s], rest}
+    {s, rest} = sread(xs, stream)
+    {[:quote, s], rest}
   end
 
   def sread([x | xs], _) do
@@ -195,7 +195,7 @@ defmodule Read do
     str
     |> String.replace("(", " ( ")
     |> String.replace(")", " ) ")
-    |> String.replace("'"," ' ")
+    |> String.replace("'", " ' ")
     |> String.replace("\n", " ")
     |> String.split()
   end

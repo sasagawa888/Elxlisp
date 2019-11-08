@@ -37,13 +37,14 @@ defmodule Elxlisp do
         {s1, env1} = Eval.eval(s, env, mode)
         Print.print(s1)
         repl1(env1, buf1, mode, exp)
-      else if exp == :sexp do
-        IO.write("S? ")
-        {s, buf1} = Read.sread(buf, :stdin)
-        {s1, env1} = Eval.eval(s, env, mode)
-        Print.print(s1)
-        repl1(env1, buf1, mode, exp)
-      end
+      else
+        if exp == :sexp do
+          IO.write("S? ")
+          {s, buf1} = Read.sread(buf, :stdin)
+          {s1, env1} = Eval.eval(s, env, mode)
+          Print.print(s1)
+          repl1(env1, buf1, mode, exp)
+        end
       end
     catch
       x ->
@@ -60,17 +61,23 @@ defmodule Elxlisp do
   def message([]) do
     IO.puts("M-expression in sequential")
   end
+
   def message(l) do
     message1(l)
   end
-  def message1([]) do IO.puts("") end
-  def message1([l|ls]) do
+
+  def message1([]) do
+    IO.puts("")
+  end
+
+  def message1([l | ls]) do
     cond do
       l == "mexp" -> IO.write("M-expression ")
       l == "sexp" -> IO.write("S-expression ")
       l == "para" -> IO.write("in parallel ")
-      l == "seq"  -> IO.write("in sequential ")
+      l == "seq" -> IO.write("in sequential ")
     end
+
     message1(ls)
   end
 
@@ -80,6 +87,7 @@ defmodule Elxlisp do
     IO.write(" ")
     throw(dt)
   end
+
   # for test M-expression
   def foo(x) do
     {s, _} = x |> Read.tokenize() |> Read.read(:stdin)

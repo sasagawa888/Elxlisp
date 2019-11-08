@@ -59,10 +59,10 @@ defmodule ElxlispTest do
     assert Elxlisp.foo("min[1;3;2]\n") == 1
     assert Elxlisp.foo("max[1;3;2]\n") == 3
     assert Elxlisp.foo("length[(1 2 3)]\n") == 3
-    # assert Elxlisp.foo("operate[+;2;3]\n") == 5
-    # assert Elxlisp.foo("operate[-;2;3]\n") == -1
-    # assert Elxlisp.foo("operate[x;2;3]\n") == 6
-    # assert Elxlisp.foo("operate[/;6;3]\n") == 2
+    assert Elxlisp.foo("operate[+;2;3]\n") == 5
+    assert Elxlisp.foo("operate[-;2;3]\n") == -1
+    assert Elxlisp.foo("operate[*;2;3]\n") == 6
+    assert Elxlisp.foo("operate[/;6;3]\n") == 2
     assert Elxlisp.foo("atom[x]\n") == :t
     assert Elxlisp.foo("atom[X]\n") == :t
     assert Elxlisp.foo("atom[1]\n") == :t
@@ -76,14 +76,18 @@ defmodule ElxlispTest do
     assert Elxlisp.foo("equal[1;\"a\"]\n") == nil
     assert Elxlisp.foo("greaterp[1;1]\n") == nil
     assert Elxlisp.foo("greaterp[1.2;1]\n") == :t
+    assert Elxlisp.foo("eqgreaterp[1;1]\n") == :t
+    assert Elxlisp.foo("eqgreaterp[1.1;1]\n") == :t
+    assert Elxlisp.foo("eqgreaterp[0.5;1]\n") == nil
     assert Elxlisp.foo("lessp[1;1]\n") == nil
     assert Elxlisp.foo("lessp[0;1]\n") == :t
-    assert Elxlisp.foo("eval[(cons x y);((x . 1)(y . 2))]\n") == [1|2]
+    assert Elxlisp.foo("eval[(cons x y);((x . 1)(y . 2))]\n") == [1 | 2]
   end
 
   test "S-expression" do
     assert Elxlisp.bar("(plus 1 2)\n") == 3
     assert Elxlisp.bar("(length '(1 2))\n") == 2
+    assert Elxlisp.bar("(car '(1 2))\n") == 1
+    assert Elxlisp.bar("(cdr '(1 . 2))\n") == 2
   end
-
 end
