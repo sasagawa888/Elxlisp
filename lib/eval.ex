@@ -11,6 +11,16 @@ defmodule Worker do
   end
 end
 
+defmodule Elxfunc do
+  def is_compiled(_) do
+    nil
+  end
+
+  def primitive(_) do
+    nil
+  end
+end
+
 # ----------------eval-------------
 defmodule Eval do
   use Bitwise
@@ -145,6 +155,12 @@ defmodule Eval do
       if ext == "lsp" do
         env1 = sload(env, Read.stokenize(string))
         {:t, env1}
+      else
+        if ext == "o" do
+          Code.compiler_options(ignore_module_conflict: true)
+          Code.compile_string(string)
+          {:t, env}
+        end
       end
     end
   end
@@ -170,7 +186,7 @@ defmodule Eval do
 
   # -----------apply--------------------------
   defp funcall(f, args, env, mode) when is_atom(f) do
-    if is_subr(f) do
+    if is_subr(f) or Elxfunc.is_compiled(f) do
       primitive([f | args])
     else
       expr = assoc(f, env)
@@ -864,11 +880,50 @@ defmodule Eval do
   end
 
   defp primitive([:compile, x]) do
-    compile(x)
+    name = String.split(x, ".") |> Enum.at(0)
+    ext = String.split(x, ".") |> Enum.at(1)
+    outfile = name <> ".o"
+    {status, string} = File.read(x)
+
+    if status == :error do
+      throw("Error compile")
+    end
+
+    File.write(outfile, "defmodule Elxfunc do\n")
+
+    cond do
+      ext == "meta" or ext == nil ->
+        File.write(outfile, is_compiled(:mexp, Read.tokenize(string)), [:append])
+
+      ext == "lsp" ->
+        File.write(outfile, is_compiled(:sexp, Read.stokenize(string)), [:append])
+    end
+
+    cond do
+      ext == "meta" or ext == nil ->
+        File.write(outfile, caller(:mexp, Read.tokenize(string), ""), [:append])
+
+      ext == "lsp" ->
+        File.write(outfile, caller(:sexp, Read.stokenize(string), ""), [:append])
+    end
+
+    cond do
+      ext == "meta" or ext == nil ->
+        File.write(outfile, compile(:mexp, Read.tokenize(string), ""), [:append])
+
+      ext == "lsp" ->
+        File.write(outfile, compile(:sexp, Read.stokenize(string), ""), [:append])
+    end
+
+    File.write(outfile, "end\n", [:append])
   end
 
   defp primitive([:compile | arg]) do
     Elxlisp.error("compile argument error", arg)
+  end
+
+  defp primitive(x) do
+    Elxfunc.primitive(x)
   end
 
   # ----------subr---------------
@@ -892,33 +947,162 @@ defmodule Eval do
     sload(env1, buf1)
   end
 
-  defp compile(buf) do
+  defp is_compiled(mode, buf) do
+    "def is_compiled(x) do\n" <>
+      "Enum.member?([" <>
+      is_compiled1(mode, buf, "") <>
+      "],x)\n" <>
+      "end\n"
+  end
+
+  defp is_compiled1(_, [], str) do
+    butlaststr(str)
+  end
+
+  defp is_compiled1(:mexp, buf, str) do
     {s, buf1} = Read.read(buf, :filein)
+    is_compiled1(:mexp, buf1, str <> to_elixir_compiled(s))
+  end
+
+  defp is_compiled1(:sexp, buf, str) do
+    {s, buf1} = Read.sread(buf, :filein)
+    is_compiled1(:sexp, buf1, str <> to_elixir_compiled(s))
+  end
+
+  defp to_elixir_compiled([:defun, name, _, _]) do
+    ":" <> Atom.to_string(name) <> ","
+  end
+
+  defp to_elixir_compiled(_) do
+    ""
+  end
+
+  defp butlaststr(str) do
+    {str1, _} = String.split_at(str, String.length(str) - 1)
+    str1
+  end
+
+  defp caller(_, [], str) do
+    str
+  end
+
+  defp caller(:mexp, buf, str) do
+    {s, buf1} = Read.read(buf, :filein)
+    caller(:mexp, buf1, str <> to_elixir_caller(s))
+  end
+
+  defp caller(:sexp, buf, str) do
+    {s, buf1} = Read.sread(buf, :filein)
+    caller(:sexp, buf1, str <> to_elixir_caller(s))
+  end
+
+  defp to_elixir_caller([:defun, name, arg, _]) do
+    "def primitive(" <>
+      namearg_to_liststr(name, arg) <> ") do " <> namearg_to_funstr(name, arg) <> " end\n"
+  end
+
+  defp to_elixir_caller(_) do
+    ""
+  end
+
+  defp namearg_to_liststr(name, arg) do
+    "[:" <> Atom.to_string(name) <> "," <> arg_to_str(arg) <> "]"
+  end
+
+  defp namearg_to_funstr(name, arg) do
+    Atom.to_string(name) <> "(" <> arg_to_str(arg) <> ")"
+  end
+
+  defp arg_to_str([l]) do
+    to_elixir(l)
+  end
+
+  defp arg_to_str([l | ls]) do
+    to_elixir(l) <> "," <> arg_to_str(ls)
+  end
+
+  defp compile(_, [], str) do
+    str
+  end
+
+  defp compile(:mexp, buf, str) do
+    {s, buf1} = Read.read(buf, :filein)
+    compile(:mexp, buf1, str <> to_elixir(s))
+  end
+
+  defp compile(:sexp, buf, str) do
+    {s, buf1} = Read.sread(buf, :filein)
     to_elixir(s)
-    compile(buf1)
+    compile(:sexp, buf1, str <> to_elixir(s))
   end
 
   defp to_elixir([]) do
-    nil
+    "\n"
   end
 
   defp to_elixir([:defun, name, arg, body]) do
-    IO.write("def ")
-    IO.write(name)
-    IO.write(arg)
-    to_elixir(body)
+    "def " <>
+      Atom.to_string(name) <>
+      "(" <>
+      arg_to_str(arg) <>
+      ") do\n" <>
+      to_elixir(body) <>
+      "\n" <>
+      "end\n"
   end
 
-  defp to_elixir([:plus]) do
-    nil
+  defp to_elixir([:cond | ls]) do
+    "cond do\n" <>
+      cond_to_str(ls) <>
+      "end\n"
+  end
+
+  defp to_elixir(:t) do
+    "true"
+  end
+
+  defp to_elixir([:plus, x]) do
+    to_elixir(x)
   end
 
   defp to_elixir([:plus, x | xs]) do
-    IO.write(x)
-    IO.write("+")
-    to_elixir([:plus, xs])
+    to_elixir(x) <> "+" <> to_elixir([:plus | xs])
   end
 
+  defp to_elixir([:eq, x, y]) do
+    to_elixir(x) <> "==" <> to_elixir(y)
+  end
+
+  defp to_elixir([:eqsmallerp, x, y]) do
+    to_elixir(x) <> "<=" <> to_elixir(y)
+  end
+
+  defp to_elixir([:sub1, x]) do
+    to_elixir(x) <> "- 1"
+  end
+
+  defp to_elixir(x) when is_list(x) do
+    [name | arg] = x
+    Atom.to_string(name) <> "(" <> arg_to_str(arg) <> ")"
+  end
+
+  defp to_elixir(x) do
+    cond do
+      is_atom(x) -> Atom.to_string(x)
+      is_integer(x) -> Integer.to_string(x)
+      is_float(x) -> Float.to_string(x)
+    end
+  end
+
+  defp cond_to_str([]) do
+    ""
+  end
+
+  defp cond_to_str([[l1, l2] | ls]) do
+    to_elixir(l1) <> " -> " <> to_elixir(l2) <> "\n" <> cond_to_str(ls)
+  end
+
+  # --------------- primitive -------------
   defp plus([]) do
     0
   end
@@ -1026,7 +1210,9 @@ defmodule Eval do
       :or,
       :not,
       :load,
-      :member
+      :member,
+      :compile,
+      :foo
     ]
 
     Enum.member?(y, x)
