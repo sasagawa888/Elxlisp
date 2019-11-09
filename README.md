@@ -107,8 +107,9 @@ foo[x] = boo[x]
 - and
 - or
 - load
--- mexp -> load["test.meta"]
--- sexp -> (load "test.lsp" sexp)
+if extension of file is  "meta" then load file as M-expression.
+if extension of file is  "lsp" then load file as S-expression.
+
 
 ## Acknowledgment
 

@@ -131,26 +131,22 @@ defmodule Eval do
 
   def eval([:load, x], env, mode) do
     {x1, _} = eval(x, env, mode)
+    ext = String.split(x1, ".") |> Enum.at(1)
     {status, string} = File.read(x1)
 
     if status == :error do
       throw("Error load")
     end
 
-    env1 = load(env, Read.tokenize(string))
-    {:t, env1}
-  end
-
-  def eval([:load, x, :sexp], env, mode) do
-    {x1, _} = eval(x, env, mode)
-    {status, string} = File.read(x1)
-
-    if status == :error do
-      throw("Error load")
+    if ext == "meta" or ext == nil do
+      env1 = load(env, Read.tokenize(string))
+      {:t, env1}
+    else
+      if ext == "lsp" do
+        env1 = sload(env, Read.stokenize(string))
+        {:t, env1}
+      end
     end
-
-    env1 = sload(env, Read.stokenize(string))
-    {:t, env1}
   end
 
   def eval([:time, x], env, mode) do
