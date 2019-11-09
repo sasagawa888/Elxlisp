@@ -1040,6 +1040,22 @@ defmodule Eval do
     "\n"
   end
 
+  defp to_elixir(:t) do
+    "true"
+  end
+
+  defp to_elixir(x) when is_atom(x) do
+    Atom.to_string(x)
+  end
+
+  defp to_elixir(x) when is_integer(x) do
+    Integer.to_string(x)
+  end
+
+  defp to_elixir(x) when is_float(x) do
+    Float.to_string(x)
+  end
+
   defp to_elixir([:defun, name, arg, body]) do
     "def " <>
       Atom.to_string(name) <>
@@ -1054,11 +1070,7 @@ defmodule Eval do
   defp to_elixir([:cond | ls]) do
     "cond do\n" <>
       cond_to_str(ls) <>
-      "end\n"
-  end
-
-  defp to_elixir(:t) do
-    "true"
+      "end"
   end
 
   defp to_elixir([:plus, x]) do
@@ -1084,14 +1096,6 @@ defmodule Eval do
   defp to_elixir(x) when is_list(x) do
     [name | arg] = x
     Atom.to_string(name) <> "(" <> arg_to_str(arg) <> ")"
-  end
-
-  defp to_elixir(x) do
-    cond do
-      is_atom(x) -> Atom.to_string(x)
-      is_integer(x) -> Integer.to_string(x)
-      is_float(x) -> Float.to_string(x)
-    end
   end
 
   defp cond_to_str([]) do
