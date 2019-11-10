@@ -7,7 +7,7 @@
         (t 2)))
 
 (defun tarai (x y z)
-  (cond ((eqsmallerp x y) y)
+  (cond ((eqlessp x y) y)
         (t (tarai (tarai (sub1 x) y z)
                   (tarai (sub1 y) z x)
                   (tarai (sub1 z) x y)))))

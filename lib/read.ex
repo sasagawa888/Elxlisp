@@ -36,7 +36,7 @@ defmodule Read do
 
   def read(["[" | xs], stream) do
     {s, rest} = read_bracket(xs, [], stream)
-    {[:cond, Enum.chunk_every(s, 2)], rest}
+    {[:cond|Enum.chunk_every(s, 2)], rest}
   end
 
   def read([x | xs], _) do

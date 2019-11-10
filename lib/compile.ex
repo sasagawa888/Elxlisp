@@ -143,11 +143,19 @@ defmodule Compile do
     to_elixir(x) <> "+" <> to_elixir([:plus | xs])
   end
 
+  defp to_elixir([:times, x]) do
+    to_elixir(x)
+  end
+
+  defp to_elixir([:times, x | xs]) do
+    to_elixir(x) <> "*" <> to_elixir([:times | xs])
+  end
+
   defp to_elixir([:eq, x, y]) do
     to_elixir(x) <> "==" <> to_elixir(y)
   end
 
-  defp to_elixir([:eqsmallerp, x, y]) do
+  defp to_elixir([:eqlessp, x, y]) do
     to_elixir(x) <> "<=" <> to_elixir(y)
   end
 
