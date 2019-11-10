@@ -1,0 +1,23 @@
+defmodule Elxfunc do
+def is_compiled(x) do
+Enum.member?([:foo,:bar,:tarai],x)
+end
+def primitive([:foo,x]) do foo(x) end
+def primitive([:bar,x]) do bar(x) end
+def primitive([:tarai,x,y,z]) do tarai(x,y,z) end
+def foo(x) do
+x+x
+end
+def bar(x) do
+cond do
+x==1 -> 1
+true -> 2
+end
+end
+def tarai(x,y,z) do
+cond do
+x<=y -> y
+true -> tarai(tarai(x- 1,y,z),tarai(y- 1,z,x),tarai(z- 1,x,y))
+end
+end
+end

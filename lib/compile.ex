@@ -135,12 +135,29 @@ defmodule Compile do
       "end"
   end
 
+  defp to_elixir([:car,x]) do
+    "hd(" <> to_elixir(x) <> ")"
+  end
+
+  defp to_elixir([:cdr,x]) do
+    "tl(" <> to_elixir(x) <> ")"
+  end
+
+  defp to_elixir([:cons,x,y]) do
+    "[" <> to_elixir(x) <> "|" <> to_elixir(y) <> "]"
+  end
+
+
   defp to_elixir([:plus, x]) do
     to_elixir(x)
   end
 
   defp to_elixir([:plus, x | xs]) do
     to_elixir(x) <> "+" <> to_elixir([:plus | xs])
+  end
+
+  defp to_elixir([:differnce, x, y]) do
+    to_elixir(x) <> "-" <> to_elixir(y)
   end
 
   defp to_elixir([:times, x]) do
@@ -151,6 +168,28 @@ defmodule Compile do
     to_elixir(x) <> "*" <> to_elixir([:times | xs])
   end
 
+  defp to_elixir([:quotient,x,y]) do
+    "div(" <> to_elixir(x) <> "," <> to_elixir(y) <> ")"
+  end
+
+  defp to_elixir([:recip,x]) do
+    "1 / " <> to_elixir(x)
+  end
+
+  defp to_elixir([:remainder,x,y]) do
+    "rem(" <> to_elixir(x) <> "," <> to_elixir(y) <> ")"
+  end
+
+  defp to_elixir([:divide,x,y]) do
+    x1 = to_elixir(x)
+    y1 = to_elixir(y)
+    "[div(" <> x1 <> "," <> y1 <> "),rem(" <> x1 <> "," <> y1 <> ")]"
+  end
+
+  defp to_elixir([:expt,x,y]) do
+    ":math.pow(" <> to_elixir(x) <> "," <> to_elixir(y) <> ")"
+  end
+
   defp to_elixir([:eq, x, y]) do
     to_elixir(x) <> "==" <> to_elixir(y)
   end
@@ -159,8 +198,20 @@ defmodule Compile do
     to_elixir(x) <> "<=" <> to_elixir(y)
   end
 
+  defp to_elixir([:add1, x]) do
+    to_elixir(x) <> "+ 1"
+  end
+
   defp to_elixir([:sub1, x]) do
     to_elixir(x) <> "- 1"
+  end
+
+  defp to_elixir([:null,x]) do
+    to_elixir(x) <> "== nil or " <> to_elixir(x) <> "== []"
+  end
+
+  defp to_elixir([:length,x]) do
+    "length(" <> to_elixir(x) <> ")"
   end
 
   defp to_elixir(x) when is_list(x) do
