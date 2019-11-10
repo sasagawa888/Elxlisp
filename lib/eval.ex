@@ -108,7 +108,7 @@ defmodule Eval do
     end
   end
 
-  def eval([:cond|arg], env, mode, tr, prop) do
+  def eval([:cond | arg], env, mode, tr, prop) do
     evcond(arg, env, mode, tr, prop)
   end
 

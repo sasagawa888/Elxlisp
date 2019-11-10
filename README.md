@@ -11,10 +11,11 @@ make clone from GitHub
 - mix elxlisp para (parallel and M-expression)
 - mix elxlisp sexp (sequential and S-expression)
 - mix elxlisp mexp (sequential and M-expression)
+
 ## example
 ```elixir
 mix elxlisp
-Lisp 1.5 in Elixir
+Lisp 1.5 in Elixir M-expression in sequential
 ? cons[A;B]
 (A . B)
 ? car[(A B C)]
@@ -35,9 +36,32 @@ goodbye
 
 ## environment is association list
 ```elixir
-Lisp 1.5 in Elixir
+Lisp 1.5 in Elixir M-expression in sequential
 ? eval[(cons x y);((x . 1)(y . 2))]
 (1 . 2)
+?
+```
+
+## compiler
+
+```elixir
+Lisp 1.5 in Elixir M-expression in sequential
+? compile["test.meta"]
+ok
+? load["test.o"]
+T
+? time[fib[30]]
+"time: 23140 micro second"
+"-------------"
+832040
+? time[tarai[12;6;0]]
+"time: 105260 micro second"
+"-------------"
+12
+? time[ack[3;9]]
+"time: 98380 micro second"
+"-------------"
+4093
 ?
 ```
 
@@ -109,6 +133,7 @@ foo[x] = boo[x]
 - load
 if extension of file is  "meta" then load file as M-expression.
 if extension of file is  "lsp" then load file as S-expression.
+- compile  compile file and generate file with extension "o"
 
 
 ## Acknowledgment
