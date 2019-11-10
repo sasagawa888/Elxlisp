@@ -12,38 +12,56 @@ defmodule Elxlisp do
     message(arg)
 
     cond do
-      Enum.member?(arg, "para") and Enum.member?(arg, "mexp") -> repl1([], [], :para, :mexp)
-      Enum.member?(arg, "seq") and Enum.member?(arg, "mexp") -> repl1([], [], :seq, :mexp)
-      Enum.member?(arg, "para") and Enum.member?(arg, "sexp") -> repl1([], [], :para, :sexp)
-      Enum.member?(arg, "seq") and Enum.member?(arg, "sexp") -> repl1([], [], :seq, :sexp)
-      Enum.member?(arg, "para") -> repl1([], [], :para, :mexp)
-      Enum.member?(arg, "seq") -> repl1([], [], :seq, :mexp)
-      Enum.member?(arg, "sexp") -> repl1([], [], :seq, :sexp)
-      Enum.member?(arg, "mexp") -> repl1([], [], :seq, :mexp)
-      true -> repl1([], [], :seq, :mexp)
+      Enum.member?(arg, "para") and Enum.member?(arg, "mexp") ->
+        repl1([], [], :para, :mexp, [], [])
+
+      Enum.member?(arg, "seq") and Enum.member?(arg, "mexp") ->
+        repl1([], [], :seq, :mexp, [], [])
+
+      Enum.member?(arg, "para") and Enum.member?(arg, "sexp") ->
+        repl1([], [], :para, :sexp, [], [])
+
+      Enum.member?(arg, "seq") and Enum.member?(arg, "sexp") ->
+        repl1([], [], :seq, :sexp, [], [])
+
+      Enum.member?(arg, "para") ->
+        repl1([], [], :para, :mexp, [], [])
+
+      Enum.member?(arg, "seq") ->
+        repl1([], [], :seq, :mexp, [], [])
+
+      Enum.member?(arg, "sexp") ->
+        repl1([], [], :seq, :sexp, [], [])
+
+      Enum.member?(arg, "mexp") ->
+        repl1([], [], :seq, :mexp, [], [])
+
+      true ->
+        repl1([], [], :seq, :mexp, [], [])
     end
   end
 
   # repl1 is helper function for repl
-  # It has environment and buffer
+  # It has environment buffer mode expression trace property
   # The environment is association list. e.g. [[:a,1],[;b,2]]
   # the buffer is list. Each elements are string
-
-  defp repl1(env, buf, mode, exp) do
+  # trace is keyward-list e.g. [{foo,0},{boo,0}] {name,nestlebel}
+  # property is keyward-list e.g. [{foo,[{a,1}{b,2}]},{bar,[{a,2},{c,3}]}]
+  defp repl1(env, buf, mode, exp, tr, prop) do
     try do
       if exp == :mexp do
         IO.write("? ")
         {s, buf1} = Read.read(buf, :stdin)
-        {s1, env1} = Eval.eval(s, env, mode)
+        {s1, env1, tr1, prop1} = Eval.eval(s, env, mode, tr, prop)
         Print.print(s1)
-        repl1(env1, buf1, mode, exp)
+        repl1(env1, buf1, mode, exp, tr1, prop1)
       else
         if exp == :sexp do
           IO.write("S? ")
           {s, buf1} = Read.sread(buf, :stdin)
-          {s1, env1} = Eval.eval(s, env, mode)
+          {s1, env1, tr1, prop1} = Eval.eval(s, env, mode, tr, prop)
           Print.print(s1)
-          repl1(env1, buf1, mode, exp)
+          repl1(env1, buf1, mode, exp, tr1, prop1)
         end
       end
     catch
@@ -51,7 +69,7 @@ defmodule Elxlisp do
         IO.inspect(x)
 
         if x != "goodbye" do
-          repl1(env, buf, mode, exp)
+          repl1(env, buf, mode, exp, tr, prop)
         else
           true
         end
@@ -91,14 +109,14 @@ defmodule Elxlisp do
   # for test M-expression
   def foo(x) do
     {s, _} = x |> Read.tokenize() |> Read.read(:stdin)
-    {s1, _} = Eval.eval(s, [], :seq)
+    {s1, _, _, _} = Eval.eval(s, [], :seq, [], [])
     s1
   end
 
   # for test S-expression
   def bar(x) do
     {s, _} = x |> Read.stokenize() |> Read.sread(:stdin)
-    {s1, _} = Eval.eval(s, [], :seq)
+    {s1, _, _, _} = Eval.eval(s, [], :seq, [], [])
     s1
   end
 

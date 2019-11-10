@@ -1,23 +1,13 @@
 defmodule Worker do
   def eval do
     receive do
-      {sender, {c, x, env}} -> send(sender, {:answer, [c, eval1(x, env)]})
+      {sender, {c, x, env, tr, prop}} -> send(sender, {:answer, [c, eval1(x, env, tr, prop)]})
     end
   end
 
-  def eval1(x, env) do
-    {s, _} = Eval.eval(x, env, :seq)
+  def eval1(x, env, tr, prop) do
+    {s, _, _, _} = Eval.eval(x, env, :seq, tr, prop)
     s
-  end
-end
-
-defmodule Elxfunc do
-  def is_compiled(_) do
-    nil
-  end
-
-  def primitive(_) do
-    nil
   end
 end
 
@@ -27,120 +17,116 @@ defmodule Eval do
 
   @moduledoc """
   Evaluate S expression
-  Return value is tuple. {val,env}
-  eval(exp,env,mode,fname)
+  Return value is tuple. {val,env,tr,prop}
+  eval(exp,env,mode,tr,prop)
   ## example
-  iex>Eval.eval(:t,[],:para)
-  {:t,[]}
-  iex>Eval.eval(nil,[],:para)
-  {nil,[]}
-  iex>Eval.eval(1,[],:para)
-  {1,[]}
-  iex>Eval.eval(:a,[[:a|1]],:para)
-  {1,[[:a|1]]}
+  iex>Eval.eval(:t,[],:para,[],[])
+  {:t,[],[],[]}
+  iex>Eval.eval(nil,[],:para,[],[])
+  {nil,[],[],[]}
+  iex>Eval.eval(1,[],:para,[],[])
+  {1,[],[],[]}
+  iex>Eval.eval(:a,[[:a|1]],:para,[],[])
+  {1,[[:a|1]],[],[]}
   """
-  def eval(:t, env, _) do
-    {:t, env}
+  def eval(:t, env, _, tr, prop) do
+    {:t, env, tr, prop}
   end
 
-  def eval(:T, env, _) do
-    {:t, env}
+  def eval(:T, env, _, tr, prop) do
+    {:t, env, tr, prop}
   end
 
-  def eval(nil, env, _) do
-    {nil, env}
+  def eval(nil, env, _, tr, prop) do
+    {nil, env, tr, prop}
   end
 
-  def eval(:NIL, env, _) do
-    {nil, env}
+  def eval(:NIL, env, _, tr, prop) do
+    {nil, env, tr, prop}
   end
 
-  def eval([], env, _) do
-    {[], env}
+  def eval([], env, _, tr, prop) do
+    {[], env, tr, prop}
   end
 
-  def eval(x, env, _) when is_atom(x) do
+  def eval(x, env, _, tr, prop) when is_atom(x) do
     if is_upper_atom(x) do
-      {x, env}
+      {x, env, tr, prop}
     else
       if Enum.member?([:+, :-, :*, :/], x) do
-        {x, env}
+        {x, env, tr, prop}
       else
         s = assoc(x, env)
-        {s, env}
+        {s, env, tr, prop}
       end
     end
   end
 
-  def eval(x, env, _) when is_number(x) do
-    {x, env}
+  def eval(x, env, _, tr, prop) when is_number(x) do
+    {x, env, tr, prop}
   end
 
-  def eval(x, env, _) when is_binary(x) do
-    {x, env}
+  def eval(x, env, _, tr, prop) when is_binary(x) do
+    {x, env, tr, prop}
   end
 
-  def eval(x, env, _) when is_tuple(x) do
-    {x, env}
+  def eval([:quote, x], env, _, tr, prop) do
+    {x, env, tr, prop}
   end
 
-  def eval([:quote, x], env, _) do
-    {x, env}
-  end
-
-  def eval([:define, left, right], env, _) do
+  def eval([:define, left, right], env, _, tr, prop) do
     [name | arg] = left
     env1 = [[name | {:func, arg, right}] | env]
-    {name, env1}
+    {name, env1, tr, prop}
   end
 
-  def eval([:defun, name, arg, body], env, _) do
+  def eval([:defun, name, arg, body], env, _, tr, prop) do
     env1 = [[name | {:func, arg, body}] | env]
-    {name, env1}
+    {name, env1, tr, prop}
   end
 
-  def eval([:set, name, arg], env, mode) do
-    {name1, _} = eval(name, env, mode)
-    {s, _} = eval(arg, env, mode)
+  def eval([:set, name, arg], env, mode, tr, prop) do
+    {name1, _, _, _} = eval(name, env, mode, tr, prop)
+    {s, _, _, _} = eval(arg, env, mode, tr, prop)
     env1 = [[name1 | s] | env]
-    {s, env1}
+    {s, env1, tr, prop}
   end
 
-  def eval([:setq, name, arg], env, mode) do
-    {s, _} = eval(arg, env, mode)
+  def eval([:setq, name, arg], env, mode, tr, prop) do
+    {s, _, _, _} = eval(arg, env, mode, tr, mode)
     env1 = [[name | s] | env]
-    {s, env1}
+    {s, env1, tr, prop}
   end
 
-  def eval([:if, x, y, z], env, mode) do
-    {x1, _} = eval(x, env, mode)
+  def eval([:if, x, y, z], env, mode, tr, prop) do
+    {x1, _, _, _} = eval(x, env, mode, tr, prop)
 
     if x1 != nil do
-      eval(y, env, mode)
+      eval(y, env, mode, tr, prop)
     else
-      eval(z, env, mode)
+      eval(z, env, mode, tr, prop)
     end
   end
 
-  def eval([:cond, arg], env, mode) do
-    evcond(arg, env, mode)
+  def eval([:cond, arg], env, mode, tr, prop) do
+    evcond(arg, env, mode, tr, prop)
   end
 
-  def eval([:prog, arg | body], env, _) do
+  def eval([:prog, arg | body], env, mode, tr, prop) do
     env1 = pairlis(arg, make_nil(arg), env)
-    evprog(body, env1)
+    evprog(body, env1, mode, tr, prop)
   end
 
-  def eval([:lambda, args, body], env, _) do
-    {{:func, args, body}, env}
+  def eval([:lambda, args, body], env, _, tr, prop) do
+    {{:func, args, body}, env, tr, prop}
   end
 
-  def eval([:function, [:lambda, args, body]], env, _) do
-    {{:funarg, args, body, env}, env}
+  def eval([:function, [:lambda, args, body]], env, _, tr, prop) do
+    {{:funarg, args, body, env}, env, tr, prop}
   end
 
-  def eval([:load, x], env, mode) do
-    {x1, _} = eval(x, env, mode)
+  def eval([:load, x], env, mode, tr, prop) do
+    {x1, _, _, _} = eval(x, env, mode, tr, prop)
     ext = String.split(x1, ".") |> Enum.at(1)
     {status, string} = File.read(x1)
 
@@ -150,42 +136,42 @@ defmodule Eval do
 
     if ext == "meta" or ext == nil do
       env1 = load(env, Read.tokenize(string))
-      {:t, env1}
+      {:t, env1, tr, prop}
     else
       if ext == "lsp" do
         env1 = sload(env, Read.stokenize(string))
-        {:t, env1}
+        {:t, env1, tr, prop}
       else
         if ext == "o" do
           Code.compiler_options(ignore_module_conflict: true)
           Code.compile_string(string)
-          {:t, env}
+          {:t, env, tr, prop}
         end
       end
     end
   end
 
-  def eval([:time, x], env, mode) do
-    {time, {result, _}} = :timer.tc(fn -> eval(x, env, mode) end)
+  def eval([:time, x], env, mode, tr, prop) do
+    {time, {result, _, _, _}} = :timer.tc(fn -> eval(x, env, mode, tr, prop) end)
     IO.inspect("time: #{time} micro second")
     IO.inspect("-------------")
-    {result, env}
+    {result, env, tr, prop}
   end
 
-  def eval(x, env, mode) when is_list(x) do
+  def eval(x, env, mode, tr, prop) when is_list(x) do
     [f | args] = x
 
     if mode == :para do
-      {funcall(f, paraevlis(args, env), env, mode), env}
+      {funcall(f, paraevlis(args, env, tr, prop), env, mode, tr, prop), env, tr, prop}
     else
       if mode == :seq do
-        {funcall(f, evlis(args, env), env, mode), env}
+        {funcall(f, evlis(args, env, tr, prop), env, mode, tr, prop), env, tr, prop}
       end
     end
   end
 
   # -----------apply--------------------------
-  defp funcall(f, args, env, mode) when is_atom(f) do
+  defp funcall(f, args, env, mode, tr, prop) when is_atom(f) do
     if is_subr(f) or Elxfunc.is_compiled(f) do
       primitive([f | args])
     else
@@ -197,48 +183,48 @@ defmodule Eval do
 
       {:func, args1, body} = assoc(f, env)
       env1 = pairlis(args1, args, env)
-      {s, _} = eval(body, env1, mode)
+      {s, _, _, _} = eval(body, env1, mode, tr, prop)
       s
     end
   end
 
-  defp funcall(f, args, env, mode) when is_list(f) do
+  defp funcall(f, args, env, mode, tr, prop) when is_list(f) do
     if Enum.at(f, 0) == :lambda do
-      {{:func, args1, body}, _} = eval(f, env, mode)
+      {{:func, args1, body}, _, _, _} = eval(f, env, mode, tr, prop)
       env1 = pairlis(args1, args, env)
-      {s, _} = eval(body, env1, mode)
+      {s, _, _, _} = eval(body, env1, mode, tr, prop)
       s
     else
       if Enum.at(f, 0) == :function do
-        {{:funarg, args1, body, env2}, _} = eval(f, env, mode)
+        {{:funarg, args1, body, env2}, _, _, _} = eval(f, env, mode, tr, prop)
         env1 = pairlis(args1, args, env)
-        {s, _} = eval(body, env1 ++ env2, mode)
+        {s, _, _, _} = eval(body, env1 ++ env2, mode, tr, prop)
         s
       end
     end
   end
 
-  defp evcond([], _, _) do
+  defp evcond([], _, _, _, _) do
     nil
   end
 
-  defp evcond([[p, e] | rest], env, mode) do
-    {s, _} = eval(p, env, mode)
+  defp evcond([[p, e] | rest], env, mode, tr, prop) do
+    {s, _, _, _} = eval(p, env, mode, tr, prop)
 
     if s != nil do
-      eval(e, env, mode)
+      eval(e, env, mode, tr, prop)
     else
-      evcond(rest, env, mode)
+      evcond(rest, env, mode, tr, prop)
     end
   end
 
-  defp evprog([x], env) do
-    eval(x, env, :seq)
+  defp evprog([x], env, mode, tr, prop) do
+    eval(x, env, mode, tr, prop)
   end
 
-  defp evprog([x | xs], env) do
-    {_, env1} = eval(x, env, :seq)
-    evprog(xs, env1)
+  defp evprog([x | xs], env, mode, tr, prop) do
+    {_, env1, _, _} = eval(x, env, mode, tr, prop)
+    evprog(xs, env1, mode, tr, prop)
   end
 
   defp make_nil([]) do
@@ -250,18 +236,18 @@ defmodule Eval do
   end
 
   # sequential evlis
-  defp evlis([], _) do
+  defp evlis([], _, _, _) do
     []
   end
 
-  defp evlis([x | xs], env) do
-    {s, env} = eval(x, env, :seq)
-    [s | evlis(xs, env)]
+  defp evlis([x | xs], env, tr, prop) do
+    {s, env, _, _} = eval(x, env, :seq, tr, prop)
+    [s | evlis(xs, env, tr, prop)]
   end
 
   # parallel evlis
-  defp paraevlis(x, env) do
-    x1 = paraevlis1(x, env, 0)
+  defp paraevlis(x, env, tr, prop) do
+    x1 = paraevlis1(x, env, tr, prop, 0)
     c = length(x) - length(x1)
     x2 = paraevlis2(c, [])
 
@@ -270,18 +256,18 @@ defmodule Eval do
     |> Enum.map(fn x -> Enum.at(x, 1) end)
   end
 
-  defp paraevlis1([], _, _) do
+  defp paraevlis1([], _, _, _, _) do
     []
   end
 
-  defp paraevlis1([x | xs], env, c) do
+  defp paraevlis1([x | xs], env, tr, prop, c) do
     if is_fun(x) do
       pid = spawn(Worker, :eval, [])
-      send(pid, {self(), {c, x, env}})
-      paraevlis1(xs, env, c + 1)
+      send(pid, {self(), {c, x, env, tr, prop}})
+      paraevlis1(xs, env, tr, prop, c + 1)
     else
-      {s, _} = eval(x, env, :seq)
-      [[c, s] | paraevlis1(xs, env, c + 1)]
+      {s, _, _, _} = eval(x, env, :seq, tr, prop)
+      [[c, s] | paraevlis1(xs, env, tr, prop, c + 1)]
     end
   end
 
@@ -790,12 +776,12 @@ defmodule Eval do
   end
 
   defp primitive([:eval, x, nil]) do
-    {s, _} = eval(x, nil, :seq)
+    {s, _, _, _} = eval(x, nil, :seq, [], [])
     s
   end
 
   defp primitive([:eval, x, y]) do
-    {s, _} = eval(x, y, :seq)
+    {s, _, _, _} = eval(x, y, :seq, [], [])
     s
   end
 
@@ -804,7 +790,7 @@ defmodule Eval do
   end
 
   defp primitive([:apply, f, a, e]) do
-    funcall(f, a, e, :seq)
+    funcall(f, a, e, :seq, [], [])
   end
 
   defp primitive([:apply | arg]) do
@@ -893,26 +879,26 @@ defmodule Eval do
 
     cond do
       ext == "meta" or ext == nil ->
-        File.write(outfile, is_compiled(:mexp, Read.tokenize(string)), [:append])
+        File.write(outfile, Compile.is_compiled(:mexp, Read.tokenize(string)), [:append])
 
       ext == "lsp" ->
-        File.write(outfile, is_compiled(:sexp, Read.stokenize(string)), [:append])
+        File.write(outfile, Compile.is_compiled(:sexp, Read.stokenize(string)), [:append])
     end
 
     cond do
       ext == "meta" or ext == nil ->
-        File.write(outfile, caller(:mexp, Read.tokenize(string), ""), [:append])
+        File.write(outfile, Compile.caller(:mexp, Read.tokenize(string), ""), [:append])
 
       ext == "lsp" ->
-        File.write(outfile, caller(:sexp, Read.stokenize(string), ""), [:append])
+        File.write(outfile, Compile.caller(:sexp, Read.stokenize(string), ""), [:append])
     end
 
     cond do
       ext == "meta" or ext == nil ->
-        File.write(outfile, compile(:mexp, Read.tokenize(string), ""), [:append])
+        File.write(outfile, Compile.compile(:mexp, Read.tokenize(string), ""), [:append])
 
       ext == "lsp" ->
-        File.write(outfile, compile(:sexp, Read.stokenize(string), ""), [:append])
+        File.write(outfile, Compile.compile(:sexp, Read.stokenize(string), ""), [:append])
     end
 
     File.write(outfile, "end\n", [:append])
@@ -933,7 +919,7 @@ defmodule Eval do
 
   defp load(env, buf) do
     {s, buf1} = Read.read(buf, :filein)
-    {_, env1} = Eval.eval(s, env, :seq)
+    {_, env1, _, _} = Eval.eval(s, env, :seq, [], [])
     load(env1, buf1)
   end
 
@@ -943,167 +929,8 @@ defmodule Eval do
 
   defp sload(env, buf) do
     {s, buf1} = Read.sread(buf, :filein)
-    {_, env1} = Eval.eval(s, env, :seq)
+    {_, env1, _, _} = Eval.eval(s, env, :seq, [], [])
     sload(env1, buf1)
-  end
-
-  defp is_compiled(mode, buf) do
-    "def is_compiled(x) do\n" <>
-      "Enum.member?([" <>
-      is_compiled1(mode, buf, "") <>
-      "],x)\n" <>
-      "end\n"
-  end
-
-  defp is_compiled1(_, [], str) do
-    butlaststr(str)
-  end
-
-  defp is_compiled1(:mexp, buf, str) do
-    {s, buf1} = Read.read(buf, :filein)
-    is_compiled1(:mexp, buf1, str <> to_elixir_compiled(s))
-  end
-
-  defp is_compiled1(:sexp, buf, str) do
-    {s, buf1} = Read.sread(buf, :filein)
-    is_compiled1(:sexp, buf1, str <> to_elixir_compiled(s))
-  end
-
-  defp to_elixir_compiled([:defun, name, _, _]) do
-    ":" <> Atom.to_string(name) <> ","
-  end
-
-  defp to_elixir_compiled(_) do
-    ""
-  end
-
-  defp butlaststr(str) do
-    {str1, _} = String.split_at(str, String.length(str) - 1)
-    str1
-  end
-
-  defp caller(_, [], str) do
-    str
-  end
-
-  defp caller(:mexp, buf, str) do
-    {s, buf1} = Read.read(buf, :filein)
-    caller(:mexp, buf1, str <> to_elixir_caller(s))
-  end
-
-  defp caller(:sexp, buf, str) do
-    {s, buf1} = Read.sread(buf, :filein)
-    caller(:sexp, buf1, str <> to_elixir_caller(s))
-  end
-
-  defp to_elixir_caller([:defun, name, arg, _]) do
-    "def primitive(" <>
-      namearg_to_liststr(name, arg) <> ") do " <> namearg_to_funstr(name, arg) <> " end\n"
-  end
-
-  defp to_elixir_caller(_) do
-    ""
-  end
-
-  defp namearg_to_liststr(name, arg) do
-    "[:" <> Atom.to_string(name) <> "," <> arg_to_str(arg) <> "]"
-  end
-
-  defp namearg_to_funstr(name, arg) do
-    Atom.to_string(name) <> "(" <> arg_to_str(arg) <> ")"
-  end
-
-  defp arg_to_str([l]) do
-    to_elixir(l)
-  end
-
-  defp arg_to_str([l | ls]) do
-    to_elixir(l) <> "," <> arg_to_str(ls)
-  end
-
-  defp compile(_, [], str) do
-    str
-  end
-
-  defp compile(:mexp, buf, str) do
-    {s, buf1} = Read.read(buf, :filein)
-    compile(:mexp, buf1, str <> to_elixir(s))
-  end
-
-  defp compile(:sexp, buf, str) do
-    {s, buf1} = Read.sread(buf, :filein)
-    to_elixir(s)
-    compile(:sexp, buf1, str <> to_elixir(s))
-  end
-
-  defp to_elixir([]) do
-    "\n"
-  end
-
-  defp to_elixir(:t) do
-    "true"
-  end
-
-  defp to_elixir(x) when is_atom(x) do
-    Atom.to_string(x)
-  end
-
-  defp to_elixir(x) when is_integer(x) do
-    Integer.to_string(x)
-  end
-
-  defp to_elixir(x) when is_float(x) do
-    Float.to_string(x)
-  end
-
-  defp to_elixir([:defun, name, arg, body]) do
-    "def " <>
-      Atom.to_string(name) <>
-      "(" <>
-      arg_to_str(arg) <>
-      ") do\n" <>
-      to_elixir(body) <>
-      "\n" <>
-      "end\n"
-  end
-
-  defp to_elixir([:cond | ls]) do
-    "cond do\n" <>
-      cond_to_str(ls) <>
-      "end"
-  end
-
-  defp to_elixir([:plus, x]) do
-    to_elixir(x)
-  end
-
-  defp to_elixir([:plus, x | xs]) do
-    to_elixir(x) <> "+" <> to_elixir([:plus | xs])
-  end
-
-  defp to_elixir([:eq, x, y]) do
-    to_elixir(x) <> "==" <> to_elixir(y)
-  end
-
-  defp to_elixir([:eqsmallerp, x, y]) do
-    to_elixir(x) <> "<=" <> to_elixir(y)
-  end
-
-  defp to_elixir([:sub1, x]) do
-    to_elixir(x) <> "- 1"
-  end
-
-  defp to_elixir(x) when is_list(x) do
-    [name | arg] = x
-    Atom.to_string(name) <> "(" <> arg_to_str(arg) <> ")"
-  end
-
-  defp cond_to_str([]) do
-    ""
-  end
-
-  defp cond_to_str([[l1, l2] | ls]) do
-    to_elixir(l1) <> " -> " <> to_elixir(l2) <> "\n" <> cond_to_str(ls)
   end
 
   # --------------- primitive -------------
