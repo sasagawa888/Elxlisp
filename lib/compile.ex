@@ -132,6 +132,32 @@ defmodule Compile do
       "end\n"
   end
 
+  defp to_elixir([:lambda, arg, body], _) do
+    "fn(" <>
+      arg_to_str(arg) <>
+      ") -> " <>
+      to_elixir(body, arg) <>
+      "end\n"
+  end
+
+  defp to_elixir([:set, x, y], arg) do
+    to_elixir(x, arg) <> " = " <> to_elixir(y, arg)
+  end
+
+  defp to_elixir([:setq, x, y], arg) do
+    Atom.to_string(x) <> " = " <> to_elixir(y, arg)
+  end
+
+  defp to_elixir([:if, x, y, z], arg) do
+    "if " <>
+      to_elixir(x, arg) <>
+      " do\n" <>
+      to_elixir(y, arg) <>
+      "\nelse\n" <>
+      to_elixir(z, arg) <>
+      "\nend\n"
+  end
+
   defp to_elixir([:cond | ls], arg) do
     "cond do\n" <>
       cond_to_str(ls, arg) <>
