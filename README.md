@@ -136,7 +136,8 @@ foo[x] = boo[x]
 if extension of file is  "meta" then load file as M-expression.
 if extension of file is  "lsp" then load file as S-expression.
 - compile  compile file and generate file with extension "o"
-
+- trace
+- untrace 
 
 ## Acknowledgment
 
