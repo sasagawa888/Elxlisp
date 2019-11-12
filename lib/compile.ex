@@ -332,6 +332,10 @@ defmodule Compile do
     "Print.print(" <> to_elixir(x, arg) <> ")"
   end
 
+  defp to_elixir([:prin1, x], arg) do
+    "Print.print1(" <> to_elixir(x, arg) <> ")"
+  end
+
   defp to_elixir([:reverse, x], arg) do
     "Enum.reverse(" <> to_elixir(x, arg) <> ")"
   end

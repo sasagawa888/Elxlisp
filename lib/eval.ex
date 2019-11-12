@@ -841,6 +841,14 @@ defmodule Eval do
     Elxlisp.error("print argument error", arg)
   end
 
+  defp primitive([:prin1, x]) do
+    Print.print1(x)
+  end
+
+  defp primitive([:prin1 | arg]) do
+    Elxlisp.error("prin1 argument error", arg)
+  end
+
   defp primitive([:quit]) do
     throw("goodbye")
   end
@@ -1071,6 +1079,7 @@ defmodule Eval do
       :eval,
       :apply,
       :print,
+      :prin1,
       :quit,
       :reverse,
       :and,

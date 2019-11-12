@@ -6,11 +6,11 @@ defmodule Print do
     IO.puts("")
   end
 
-  defp print1(x) when is_number(x) do
+  def print1(x) when is_number(x) do
     IO.write(x)
   end
 
-  defp print1(x) when is_atom(x) do
+  def print1(x) when is_atom(x) do
     cond do
       x == :t -> IO.write("T")
       x == nil -> IO.write("F")
@@ -18,11 +18,11 @@ defmodule Print do
     end
   end
 
-  defp print1(x) when is_list(x) do
+  def print1(x) when is_list(x) do
     print_list(x)
   end
 
-  defp print1(x) when is_tuple(x) do
+  def print1(x) when is_tuple(x) do
     if elem(x, 0) == :func do
       IO.write("function")
     else
@@ -30,7 +30,7 @@ defmodule Print do
     end
   end
 
-  defp print1(x) when is_binary(x) do
+  def print1(x) when is_binary(x) do
     IO.write("\"")
     IO.write(x)
     IO.write("\"")
