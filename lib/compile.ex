@@ -121,6 +121,10 @@ defmodule Compile do
     Float.to_string(x)
   end
 
+  defp to_elixir(x, _) when is_binary(x) do
+    "\"" <> x <> "\""
+  end
+
   defp to_elixir([:defun, name, arg, body], _) do
     "def " <>
       Atom.to_string(name) <>

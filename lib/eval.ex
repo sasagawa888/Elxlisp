@@ -158,37 +158,37 @@ defmodule Eval do
     {result, env, tr, prop}
   end
 
-  def eval([:putprop,x,y,z], env, _, tr, prop) do
+  def eval([:putprop, x, y, z], env, _, tr, prop) do
     old = prop[x]
+
     if old == nil do
-      dt = {x,[{y,z}]}
-      prop1 = [dt|prop]
+      dt = {x, [{y, z}]}
+      prop1 = [dt | prop]
       {z, env, tr, prop1}
     else
-      prop1 = Keyword.put(old,x,[{y,z}|old])
+      prop1 = Keyword.put(old, x, [{y, z} | old])
       {z, env, tr, prop1}
     end
   end
 
-  def eval([:get,x,y], env, _, tr, prop) do
+  def eval([:get, x, y], env, _, tr, prop) do
     dt = prop[x]
     val = dt[y]
     {val, env, tr, prop}
   end
 
-  def eval([:trace,x],env,_,tr,prop) do
-    {:t,env,[x|tr],prop}
+  def eval([:trace, x], env, _, tr, prop) do
+    {:t, env, [x | tr], prop}
   end
 
-  def eval([:untrace,x],env,_,tr,prop) do
-    tr1 = Keyword.delete(tr,x)
-    {:t,env,tr1,prop}
-  end
-  def eval([:untrace],env,_,_,prop) do
-    {:t,env,[],prop}
+  def eval([:untrace, x], env, _, tr, prop) do
+    tr1 = Keyword.delete(tr, x)
+    {:t, env, tr1, prop}
   end
 
-
+  def eval([:untrace], env, _, _, prop) do
+    {:t, env, [], prop}
+  end
 
   def eval(x, env, mode, tr, prop) when is_list(x) do
     [f | args] = x
@@ -207,9 +207,10 @@ defmodule Eval do
     if is_subr(f) or Elxfunc.is_compiled(f) do
       primitive([f | args])
     else
-      if Enum.member?(tr,f) do
-        Print.print([f|args])
+      if Enum.member?(tr, f) do
+        Print.print([f | args])
       end
+
       expr = assoc(f, env)
 
       if expr == nil do

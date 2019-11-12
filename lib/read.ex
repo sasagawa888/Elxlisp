@@ -36,6 +36,11 @@ defmodule Read do
 
   def read(["[" | xs], stream) do
     {s, rest} = read_bracket(xs, [], stream)
+
+    if rem(length(s), 2) != 0 do
+      Elxlisp.error("illegal cond clause", s)
+    end
+
     {[:cond | Enum.chunk_every(s, 2)], rest}
   end
 
