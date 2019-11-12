@@ -158,6 +158,24 @@ defmodule Eval do
     {result, env, tr, prop}
   end
 
+  def eval([:putprop,x,y,z], env, _, tr, prop) do
+    old = prop[x]
+    if old == nil do
+      dt = {x,[{y,z}]}
+      prop1 = [dt|prop]
+      {z, env, tr, prop1}
+    else
+      prop1 = Keyword.put(old,x,[{y,z}|old])
+      {z, env, tr, prop1}
+    end
+  end
+
+  def eval([:get,x,y], env, _, tr, prop) do
+    dt = prop[x]
+    val = dt[y]
+    {val, env, tr, prop}
+  end
+
   def eval(x, env, mode, tr, prop) when is_list(x) do
     [f | args] = x
 
