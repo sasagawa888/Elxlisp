@@ -125,6 +125,8 @@ foo[x] = boo[x]
 - eval
 - apply
 - print
+- putprop
+- get
 - quit
 - reverse
 - member

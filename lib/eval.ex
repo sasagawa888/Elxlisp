@@ -176,6 +176,20 @@ defmodule Eval do
     {val, env, tr, prop}
   end
 
+  def eval([:trace,x],env,_,tr,prop) do
+    {:t,env,[x|tr],prop}
+  end
+
+  def eval([:untrace,x],env,_,tr,prop) do
+    tr1 = Keyword.delete(tr,x)
+    {:t,env,tr1,prop}
+  end
+  def eval([:untrace],env,_,_,prop) do
+    {:t,env,[],prop}
+  end
+
+
+
   def eval(x, env, mode, tr, prop) when is_list(x) do
     [f | args] = x
 
@@ -193,6 +207,9 @@ defmodule Eval do
     if is_subr(f) or Elxfunc.is_compiled(f) do
       primitive([f | args])
     else
+      if Enum.member?(tr,f) do
+        Print.print([f|args])
+      end
       expr = assoc(f, env)
 
       if expr == nil do
