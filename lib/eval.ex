@@ -909,6 +909,21 @@ defmodule Eval do
     Elxlisp.error("member argument error", arg)
   end
 
+  defp primitive([:append,x,y]) do
+    if !is_list(x) and x != [] do
+      Elxlisp.error("append not list",x)
+    end
+    if !is_list(y) and x != [] do
+      Elxlisp.error("append not list",y)
+    end
+
+    x ++ y
+  end
+
+  defp primitive([:append | arg]) do
+    Elxlisp.error("append argument error", arg)
+  end
+
   defp primitive([:compile, x]) do
     name = String.split(x, ".") |> Enum.at(0)
     ext = String.split(x, ".") |> Enum.at(1)
@@ -1087,6 +1102,7 @@ defmodule Eval do
       :not,
       :load,
       :member,
+      :append,
       :compile,
       :foo
     ]

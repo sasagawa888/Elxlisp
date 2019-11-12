@@ -131,6 +131,7 @@ foo[x] = boo[x]
 - quit
 - reverse
 - member
+- append 
 - and
 - or
 - load
