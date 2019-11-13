@@ -344,6 +344,14 @@ defmodule Compile do
     "Enum.member?(" <> to_elixir(y, arg) <> "," <> to_elixir(x, arg) <> ")"
   end
 
+  defp to_elixir([:append, x, y], arg) do
+    to_elixir(x, arg) <> "++" <> to_elixir(y, arg)
+  end
+
+  defp to_elixir([:maplist, x, y], arg) do
+    "Enum.map(" <> to_elixir(y, arg) <> "," <> to_elixir(x, arg) <> ")"
+  end
+
   defp to_elixir([:and | x], arg) do
     x1 = Enum.map(x, fn y -> to_elixir(y, arg) end)
     List.to_string(x1) <> "|> Enum.all?(fn x -> x != nil end)"

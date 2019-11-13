@@ -19,6 +19,3 @@ union[x;y] = [null[x]->y;
 intersection[x;y] = [null[x]->NIL;
                      member[car[x];y]->cons[car[x];intersection[cdr[x];y]];
                      T->intersection[cdr[x];y]]
-
-maplist[x;fname] = [null[x]->NIL;
-                 T->cons[fname[car[x]];maplist[cdr[x];fname]]]

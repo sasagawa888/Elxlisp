@@ -224,20 +224,16 @@ defmodule Eval do
     end
   end
 
-  defp funcall(f, args, env, mode, tr, prop) when is_list(f) do
-    if Enum.at(f, 0) == :lambda do
-      {{:func, args1, body}, _, _, _} = eval(f, env, mode, tr, prop)
-      env1 = pairlis(args1, args, env)
-      {s, _, _, _} = eval(body, env1, mode, tr, prop)
-      s
-    else
-      if Enum.at(f, 0) == :function do
-        {{:funarg, args1, body, env2}, _, _, _} = eval(f, env, mode, tr, prop)
-        env1 = pairlis(args1, args, env)
-        {s, _, _, _} = eval(body, env1 ++ env2, mode, tr, prop)
-        s
-      end
-    end
+  defp funcall({:func, args1, body}, args, env, mode, tr, prop) do
+    env1 = pairlis(args1, args, env)
+    {s, _, _, _} = eval(body, env1, mode, tr, prop)
+    s
+  end
+
+  defp funcall({:funarg, args1, body, env2}, args, env, mode, tr, prop) do
+    env1 = pairlis(args1, args, env)
+    {s, _, _, _} = eval(body, env1 ++ env2, mode, tr, prop)
+    s
   end
 
   defp evcond([], _, _, _, _) do
@@ -909,12 +905,13 @@ defmodule Eval do
     Elxlisp.error("member argument error", arg)
   end
 
-  defp primitive([:append,x,y]) do
+  defp primitive([:append, x, y]) do
     if !is_list(x) and x != [] do
-      Elxlisp.error("append not list",x)
+      Elxlisp.error("append not list", x)
     end
+
     if !is_list(y) and x != [] do
-      Elxlisp.error("append not list",y)
+      Elxlisp.error("append not list", y)
     end
 
     x ++ y
@@ -922,6 +919,18 @@ defmodule Eval do
 
   defp primitive([:append | arg]) do
     Elxlisp.error("append argument error", arg)
+  end
+
+  defp primitive([:maplist, _, []]) do
+    []
+  end
+
+  defp primitive([:maplist, f, [l | ls]]) do
+    [funcall(f, [l], [], :seq, [], []) | primitive([:maplist, f, ls])]
+  end
+
+  defp primitive([:maplist | arg]) do
+    Elxlisp.error("maplist argument error", arg)
   end
 
   defp primitive([:compile, x]) do
@@ -1103,6 +1112,7 @@ defmodule Eval do
       :load,
       :member,
       :append,
+      :maplist,
       :compile,
       :foo
     ]
