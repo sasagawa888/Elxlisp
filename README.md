@@ -131,7 +131,9 @@ foo[x] = boo[x]
 - quit
 - reverse
 - member
-- append 
+- append
+- mapcar
+- maplist 
 - and
 - or
 - load
