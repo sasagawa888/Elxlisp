@@ -133,7 +133,7 @@ foo[x] = boo[x]
 - member
 - append
 - mapcar
-- maplist 
+- maplist
 - and
 - or
 - load
