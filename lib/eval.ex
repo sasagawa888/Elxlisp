@@ -949,6 +949,10 @@ defmodule Eval do
     {:t, env, tr, prop}
   end
 
+  defp primitive([:compile | arg], _, _, _, _) do
+    Elxlisp.error("compile argument error", arg)
+  end
+
   defp primitive([:set, name, arg], env, _, tr, prop) do
     {name1, _, _, _} = name
     {s, _, _, _} = arg
@@ -973,10 +977,6 @@ defmodule Eval do
     dt = prop[x]
     val = dt[y]
     {val, env, tr, prop}
-  end
-
-  defp primitive([:compile | arg], _, _, _, _) do
-    Elxlisp.error("compile argument error", arg)
   end
 
   defp primitive(x, env, _, tr, prop) do
