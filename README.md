@@ -78,8 +78,7 @@ T
 [p1->e1;p2->e2...]
 - if
 - defun    
-foo[x] = boo[x]
-- set       
+foo[x] = boo[x]      
 - setq
 - quote
 - lambda
@@ -128,6 +127,7 @@ foo[x] = boo[x]
 - prin1
 - putprop
 - get
+- set
 - quit
 - reverse
 - member
@@ -139,6 +139,7 @@ foo[x] = boo[x]
 - load
 if extension of file is  "meta" then load file as M-expression.
 if extension of file is  "lsp" then load file as S-expression.
+if extension of file is  "o" then load file as compiled code.
 - compile  compile file and generate file with extension "o"
 - trace
 - untrace
