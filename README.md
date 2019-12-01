@@ -43,8 +43,30 @@ Lisp 1.5 in Elixir M-expression in sequential
 ```
 
 ## parallel
-When invoke in parallel, evlis function run in parallel.
-Fibonacci run faster in parallel. See test.meta
+When invoke in parallel, evlis function runs in parallel.
+Fibonacci runs faster in parallel. See test.meta
+
+```
+Lisp 1.5 in Elixir M-expression in sequential
+? load["test.meta"]
+T
+? time[fib[30]]
+"time: 3455959 micro second"
+"-------------"
+832040
+? quit[]
+"goodbye"
+
+$ mix elxlisp para
+Lisp 1.5 in Elixir in parallel
+? load["test.meta"]
+T
+? time[fib[30]]
+"time: 2168482 micro second"
+"-------------"
+832040
+?
+```
 
 ## compiler
 
