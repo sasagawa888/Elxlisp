@@ -42,6 +42,10 @@ Lisp 1.5 in Elixir M-expression in sequential
 ?
 ```
 
+## parallel
+When invoke in parallel, evlis function run in parallel.
+Fibonacci run faster in parallel. See test.meta
+
 ## compiler
 
 ```elixir
