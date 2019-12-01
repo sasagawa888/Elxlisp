@@ -1,5 +1,5 @@
 # Elxlisp
-Lisp 1.5 M-expression. Now,under construction.
+Lisp 1.5 M-expression.
 Also S-expression is available with invoke option.
 
 ## Installation
