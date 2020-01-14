@@ -9,6 +9,14 @@ defmodule Elxfunc do
 end
 
 defmodule Compile do
+  @moduledoc """
+  Compile module generate Elixir code file. filename identifier is "o"  e.g. foo.o
+  """
+
+  @doc """
+  Generate is_compiled/1 function.
+  This function checks the function compiled-function or other 
+  """
   def is_compiled(mode, buf) do
     "def is_compiled(x) do\n" <>
       "Enum.member?([" <>
@@ -44,6 +52,10 @@ defmodule Compile do
     str1
   end
 
+  @doc """
+  this function generate function-call code
+  1st arg is mode :mexp(Meta-expression) or :sexp(S-expression) 
+  """
   def caller(_, [], str) do
     str
   end

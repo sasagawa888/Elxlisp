@@ -89,5 +89,6 @@ defmodule ElxlispTest do
     assert Elxlisp.bar("(length '(1 2))\n") == 2
     assert Elxlisp.bar("(car '(1 2))\n") == 1
     assert Elxlisp.bar("(cdr '(1 . 2))\n") == 2
+    assert Elxlisp.bar("(expt 3 100)\n") == 515377520732011331036461129765621272702107522001
   end
 end

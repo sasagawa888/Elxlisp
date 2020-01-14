@@ -1,4 +1,7 @@
 defmodule Worker do
+  @moduledoc """
+  evlis for paralell uses this module
+  """
   def eval do
     receive do
       {sender, {c, x, env, tr, prop}} -> send(sender, {:answer, [c, eval1(x, env, tr, prop)]})
@@ -50,47 +53,48 @@ defmodule Eval do
   end
 
   def eval(x, env, _, tr, prop) when is_atom(x) do
-    if is_upper_atom(x) do
-      {x, env, tr, prop}
-    else
-      if Enum.member?([:+, :-, :*, :/], x) do
+    cond do
+      is_upper_atom(x) ->
         {x, env, tr, prop}
-      else
+
+      Enum.member?([:+, :-, :*, :/], x) ->
+        {x, env, tr, prop}
+
+      true ->
         s = assoc(x, env)
         {s, env, tr, prop}
-      end
     end
   end
-
+  # number
   def eval(x, env, _, tr, prop) when is_number(x) do
     {x, env, tr, prop}
   end
-
+  # string
   def eval(x, env, _, tr, prop) when is_binary(x) do
     {x, env, tr, prop}
   end
-
+  # quote
   def eval([:quote, x], env, _, tr, prop) do
     {x, env, tr, prop}
   end
-
+  # define
   def eval([:define, left, right], env, _, tr, prop) do
     [name | arg] = left
     env1 = [[name | {:func, arg, right}] | env]
     {name, env1, tr, prop}
   end
-
+  # defun
   def eval([:defun, name, arg, body], env, _, tr, prop) do
     env1 = [[name | {:func, arg, body}] | env]
     {name, env1, tr, prop}
   end
-
+  # setq
   def eval([:setq, name, arg], env, mode, tr, prop) do
     {s, _, _, _} = eval(arg, env, mode, tr, mode)
     env1 = [[name | s] | env]
     {s, env1, tr, prop}
   end
-
+  # if
   def eval([:if, x, y, z], env, mode, tr, prop) do
     {x1, _, _, _} = eval(x, env, mode, tr, prop)
 
@@ -100,24 +104,24 @@ defmodule Eval do
       eval(z, env, mode, tr, prop)
     end
   end
-
+  # cond
   def eval([:cond | arg], env, mode, tr, prop) do
     evcond(arg, env, mode, tr, prop)
   end
-
+  # prog
   def eval([:prog, arg | body], env, mode, tr, prop) do
     env1 = pairlis(arg, make_nil(arg), env)
     evprog(body, env1, mode, tr, prop)
   end
-
+  # lambda
   def eval([:lambda, args, body], env, _, tr, prop) do
     {{:func, args, body}, env, tr, prop}
   end
-
+  # function
   def eval([:function, [:lambda, args, body]], env, _, tr, prop) do
     {{:funarg, args, body, env}, env, tr, prop}
   end
-
+  # load
   def eval([:load, x], env, mode, tr, prop) do
     {x1, _, _, _} = eval(x, env, mode, tr, prop)
     ext = String.split(x1, ".") |> Enum.at(1)
@@ -127,34 +131,33 @@ defmodule Eval do
       throw("Error load")
     end
 
-    if ext == "meta" or ext == nil do
-      env1 = load(env, Read.tokenize(string))
-      {:t, env1, tr, prop}
-    else
-      if ext == "lsp" do
+    cond do
+      ext == "meta" or ext == nil ->
+        env1 = load(env, Read.tokenize(string))
+        {:t, env1, tr, prop}
+
+      ext == "lsp" ->
         env1 = sload(env, Read.stokenize(string))
         {:t, env1, tr, prop}
-      else
-        if ext == "o" do
-          Code.compiler_options(ignore_module_conflict: true)
-          Code.compile_string(string)
-          {:t, env, tr, prop}
-        end
-      end
+
+      ext == "o" ->
+        Code.compiler_options(ignore_module_conflict: true)
+        Code.compile_string(string)
+        {:t, env, tr, prop}
     end
   end
-
+  # time
   def eval([:time, x], env, mode, tr, prop) do
     {time, {result, _, _, _}} = :timer.tc(fn -> eval(x, env, mode, tr, prop) end)
     IO.inspect("time: #{time} micro second")
     IO.inspect("-------------")
     {result, env, tr, prop}
   end
-
+  # trace
   def eval([:trace, x], env, _, tr, prop) do
     {:t, env, [x | tr], prop}
   end
-
+  # untrace
   def eval([:untrace, x], env, _, tr, prop) do
     tr1 = Keyword.delete(tr, x)
     {:t, env, tr1, prop}
@@ -163,16 +166,15 @@ defmodule Eval do
   def eval([:untrace], env, _, _, prop) do
     {:t, env, [], prop}
   end
-
+  # function call
   def eval(x, env, mode, tr, prop) when is_list(x) do
     [f | args] = x
 
-    if mode == :para do
-      funcall(f, paraevlis(args, env, tr, prop), env, mode, tr, prop)
-    else
-      if mode == :seq do
+    cond do
+      mode == :para ->
+        funcall(f, paraevlis(args, env, tr, prop), env, mode, tr, prop)
+      mode == :seq ->
         funcall(f, evlis(args, env, tr, prop), env, mode, tr, prop)
-      end
     end
   end
 
@@ -288,6 +290,14 @@ defmodule Eval do
     end
   end
 
+  @doc """
+  iex>Eval.is_upper_atom(:A)
+  true
+  iex>Eval.is_upper_atom(:ABC)
+  true
+  iex>Eval.is_upper_atom(:Abc)
+  false
+  """
   def is_upper_atom(x) do
     Enum.all?(Atom.to_charlist(x), fn y -> y >= 65 && y <= 90 end)
   end
@@ -445,8 +455,12 @@ defmodule Eval do
     if !is_number(y) do
       Elxlisp.error("expt not number", y)
     end
-
-    {:math.pow(x, y), env, tr, prop}
+    
+    if is_float(x) || is_float(y) || y < 0 do 
+      {:math.pow(x, y), env, tr, prop}
+    else 
+      {power(x,y), env, tr, prop}
+    end
   end
 
   defp primitive([:expt | arg], _, _, _, _) do
@@ -1027,6 +1041,15 @@ defmodule Eval do
     end
 
     x * times(xs)
+  end
+
+  defp power(_,0) do 1 end
+  defp power(x,y) do
+    if rem(y,2) == 0 do 
+      power(x*x,div(y,2))
+    else 
+      x * power(x,y-1)
+    end
   end
 
   defp logor([x, y]) do
