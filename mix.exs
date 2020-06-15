@@ -5,13 +5,27 @@ defmodule Elxlisp.MixProject do
     [
       app: :elxlisp,
       version: "0.1.0",
-      elixir: "~> 1.8",
-      start_permanent: Mix.env() == :prod,
-      deps: deps(),
+      elixir: "~> 1.7",
       description: "Lisp1.5 interpreter and compiler",
+      deps: deps(),
+
+      # Docs
+      name: "Elxlisp",
+      source_url: "https://github.com/sasagawa888/Elxlisp",
+      start_permanent: Mix.env() == :prod,
+      docs: [
+        # The main page in the docs
+        main: "readme",
+        extras: ["README.md"]
+      ],
       package: [
+        files: [
+          "lib",
+          "README.md",
+          "mix.exs"
+        ],
         maintainers: ["Kenichi Sasagawa"],
-        licenses: ["BSD"],
+        licenses: ["modified BSD"],
         links: %{"GitHub" => "https://github.com/sasagawa888/Elxlisp"}
       ]
     ]
